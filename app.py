@@ -114,7 +114,7 @@ def get_supabase_client(access_token=None):
 
 
 REFRESH_THRESHOLD_SECONDS = 5 * 60
-IDLE_LIMIT_SECONDS = 60 * 60
+IDLE_LIMIT_SECONDS = 10
 
 
 def _jwt_exp(token):
