@@ -631,9 +631,9 @@ td strong,
 }
 
 .flash-session_expired {
-    background: var(--paper-deep);
-    color: var(--ink-mute);
-    border-left: 3px solid var(--rule);
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-left: 3px solid var(--danger);
 }
 
 /* ---------- Modal notice ---------- */
