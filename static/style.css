@@ -582,9 +582,6 @@ td strong,
     display: block;
 }
 
-.hazardous {
-    color: var(--danger);
-}
 
 .pzn {
     font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -634,89 +631,6 @@ td strong,
     background: var(--danger-soft);
     color: var(--danger);
     border-left: 3px solid var(--danger);
-}
-
-/* ---------- Modal notice ---------- */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(26, 24, 20, 0.52);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-}
-
-.modal-overlay.visible {
-    display: flex;
-}
-
-.modal-card {
-    background: var(--card);
-    border-radius: var(--r-lg);
-    box-shadow: var(--lift-3);
-    border: 1px solid var(--rule);
-    max-width: 460px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-    transform: translateY(14px);
-    transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.modal-overlay.visible .modal-card {
-    transform: translateY(0);
-}
-
-.modal-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 1.6rem;
-    width: 3.5rem;
-    height: 3px;
-    background: var(--amber);
-    border-radius: 0 0 2px 2px;
-}
-
-.modal-header {
-    padding: 1.5rem 1.75rem 1rem;
-    border-bottom: 1px solid var(--rule-soft);
-}
-
-.modal-header h3 {
-    font-family: "Fraunces", serif;
-    font-weight: 500;
-    font-size: 1.15rem;
-    letter-spacing: -0.015em;
-    color: var(--ink);
-    margin: 0;
-}
-
-.modal-body {
-    padding: 1.25rem 1.75rem;
-}
-
-.modal-body p {
-    color: var(--ink-soft);
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-.modal-footer {
-    padding: 1rem 1.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    border-top: 1px solid var(--rule-soft);
-}
-
-.modal-footer button {
-    margin-top: 0;
 }
 
 /* ---------- Login ---------- */

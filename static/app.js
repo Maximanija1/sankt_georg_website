@@ -79,12 +79,6 @@
         }
     }
 
-    function copyCodesForDate(pzn, dateStr, btn) {
-        const dt = new Date(dateStr + "T05:00:00+02:00");
-        const nextDt = new Date(dt.getTime() + 24 * 60 * 60 * 1000);
-        copyCodesForMedication(pzn, dt.toISOString(), nextDt.toISOString(), btn);
-    }
-
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");
         if (searchInput) {
@@ -94,9 +88,7 @@
         document.querySelectorAll(".btn-copy").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 const pzn = btn.dataset.pzn || "";
-                if (btn.dataset.date) {
-                    copyCodesForDate(pzn, btn.dataset.date, btn);
-                } else if (btn.dataset.from && btn.dataset.to) {
+                if (btn.dataset.from && btn.dataset.to) {
                     copyCodesForMedication(pzn, btn.dataset.from, btn.dataset.to, btn);
                 }
             });

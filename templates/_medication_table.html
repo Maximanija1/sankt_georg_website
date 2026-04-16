@@ -1,0 +1,66 @@
+<table id="medicationTable" class="fixed-table {% if medications[0].user_email %}with-user{% endif %}">
+    {% if medications[0].user_email %}
+    <colgroup>
+        <col class="col-idx">
+        <col class="col-med">
+        <col class="col-mfr">
+        <col class="col-user">
+        <col class="col-count">
+        <col class="col-action">
+    </colgroup>
+    {% else %}
+    <colgroup>
+        <col class="col-idx">
+        <col class="col-med">
+        <col class="col-mfr">
+        <col class="col-count">
+        <col class="col-action">
+    </colgroup>
+    {% endif %}
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Medikament</th>
+            <th>Hersteller</th>
+            {% if medications[0].user_email %}
+            <th>Benutzer</th>
+            {% endif %}
+            <th>Anzahl</th>
+            <th>Aktion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for med in medications %}
+        <tr class="medication-row"
+            data-search="{{ med.product_name|lower }} {{ med.pzn|default('', true)|lower }} {{ med.manufacturer|lower }}">
+            <td><strong>{{ loop.index }}</strong></td>
+            <td>
+                {% if med.product_name == 'Unbekannt' %}
+                <span class="unknown">{{ med.product_name }}</span>
+                {% else %}
+                <span class="med-name">{{ med.product_name }}</span>
+                {% endif %}
+                {% if med.pzn %}<span class="pzn">PZN {{ med.pzn }}</span>{% endif %}
+            </td>
+            <td>{{ med.manufacturer }}</td>
+            {% if med.user_email %}
+            <td>{{ med.user_email }}</td>
+            {% endif %}
+            <td><span class="count-badge">{{ med.scan_count }}</span></td>
+            <td>
+                <button class="btn-copy"
+                    data-pzn="{{ med.pzn|default('', true) }}"
+                    data-from="{{ p_from }}"
+                    data-to="{{ p_to }}">
+                    Kopieren
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary">
+    Gesamt: <strong>{{ medications|sum(attribute='scan_count') }}</strong> Codes
+    bei <strong>{{ medications|length }}</strong> Medikamenten
+</div>

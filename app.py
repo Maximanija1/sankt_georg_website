@@ -51,7 +51,6 @@ app.config.update(
     SESSION_COOKIE_NAME="__Host-sankt_georg_session",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=1 * 1024 * 1024,
-    WTF_CSRF_TIME_LIMIT=None,
     PREFERRED_URL_SCHEME="https",
 )
 
@@ -96,14 +95,9 @@ def too_many_requests(_e):
 @app.errorhandler(500)
 def internal_error(e):
     app.logger.exception("Unhandled server error: %s", e)
-    return (
-        render_template("login.html")
-        if request.path == "/"
-        else (
-            jsonify({"error": "Internal server error"}),
-            500,
-        )
-    )
+    if request.path == "/":
+        return render_template("login.html"), 500
+    return jsonify({"error": "Internal server error"}), 500
 
 
 def get_supabase_client(access_token=None):
@@ -114,7 +108,7 @@ def get_supabase_client(access_token=None):
 
 
 REFRESH_THRESHOLD_SECONDS = 5 * 60
-IDLE_LIMIT_SECONDS = 10
+IDLE_LIMIT_SECONDS = 30 * 60
 
 
 def _jwt_exp(token):
@@ -126,15 +120,6 @@ def _jwt_exp(token):
     except Exception:
         return None
 
-
-def _session_is_idle():
-    token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
-    if not token or not refresh_token:
-        return True
-    now = int(datetime.now(pytz.utc).timestamp())
-    last_activity = session.get("last_activity", now)
-    return now - last_activity > IDLE_LIMIT_SECONDS
 
 
 def _expire_session():
@@ -289,9 +274,9 @@ def today():
 def history():
     token = session["access_token"]
     date_str = request.args.get("date", "")
+    client = get_supabase_client(token)
 
     try:
-        client = get_supabase_client(token)
         days_result = client.rpc("dashboard_get_scan_days", {"p_limit": 1000}).execute()
         scan_days = days_result.data or []
     except Exception:
@@ -300,11 +285,12 @@ def history():
 
     medications = []
     selected_date = date_str
+    p_from = ""
+    p_to = ""
 
     if date_str:
         try:
             p_from, p_to = get_day_boundaries(date_str)
-            client = get_supabase_client(token)
             result = client.rpc(
                 "dashboard_get_medications", {"p_from": p_from, "p_to": p_to}
             ).execute()
@@ -321,8 +307,8 @@ def history():
         scan_days=scan_days,
         selected_date=selected_date,
         user_email=session.get("user_email", ""),
-        p_from=request.args.get("p_from", ""),
-        p_to=request.args.get("p_to", ""),
+        p_from=p_from,
+        p_to=p_to,
     )
 
 
@@ -357,8 +343,7 @@ def api_codes():
 def api_session():
     if "access_token" not in session:
         return jsonify({"ok": False, "expired": True}), 401
-    if _session_is_idle():
-        _expire_session()
+    if not _ensure_fresh_token():
         return jsonify({"ok": False, "expired": True}), 401
     return jsonify({"ok": True})
 
