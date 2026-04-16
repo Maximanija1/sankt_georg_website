@@ -201,7 +201,6 @@ body {
 .nav-links a.logout,
 .nav-links button.logout {
     color: var(--ink-mute);
-    margin-left: 0.5rem;
 }
 
 .nav-links a.logout:hover,
@@ -228,10 +227,12 @@ body {
     font-weight: 500;
     font-size: 0.875rem;
     padding: 0.45rem 0.8rem;
+    margin: 0;
     border: none;
     background: none;
     border-radius: var(--r-sm);
     cursor: pointer;
+    line-height: 1.55;
 }
 
 /* ---------- Container ---------- */
