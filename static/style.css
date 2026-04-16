@@ -630,6 +630,12 @@ td strong,
     border-left: 3px solid var(--success);
 }
 
+.flash-session_expired {
+    background: var(--paper-deep);
+    color: var(--ink-mute);
+    border-left: 3px solid var(--rule);
+}
+
 /* ---------- Modal notice ---------- */
 .modal-overlay {
     display: none;
