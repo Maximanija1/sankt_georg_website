@@ -1,6 +1,31 @@
 (function () {
     "use strict";
 
+    let sessionExpired = false;
+    let lastSessionPing = 0;
+    const SESSION_PING_THROTTLE_MS = 2000;
+
+    function redirectToLogin() {
+        if (sessionExpired) return;
+        sessionExpired = true;
+        window.location.href = "/login";
+    }
+
+    async function pingSession() {
+        if (sessionExpired) return;
+        const now = Date.now();
+        if (now - lastSessionPing < SESSION_PING_THROTTLE_MS) return;
+        lastSessionPing = now;
+        try {
+            const res = await fetch("/api/session", {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+                cache: "no-store",
+            });
+            if (res.status === 401) redirectToLogin();
+        } catch (_e) { /* network error: ignore */ }
+    }
+
     function filterTable() {
         const input = document.getElementById("searchInput");
         if (!input) return;
@@ -23,6 +48,10 @@
                 credentials: "same-origin",
                 headers: { Accept: "application/json" },
             });
+            if (response.status === 401) {
+                redirectToLogin();
+                return;
+            }
             const data = await response.json();
 
             if (data.codes && data.codes.length > 0) {
@@ -71,6 +100,15 @@
                     copyCodesForMedication(pzn, btn.dataset.from, btn.dataset.to, btn);
                 }
             });
+        });
+
+        ["pointerdown", "keydown", "input", "change", "copy", "paste", "cut"].forEach(
+            function (evt) {
+                document.addEventListener(evt, pingSession, { capture: true, passive: true });
+            }
+        );
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") pingSession();
         });
     });
 })();

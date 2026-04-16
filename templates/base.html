@@ -19,7 +19,7 @@
                 <span class="brand-text">ScanBuddy</span>
             </a>
             <div class="nav-links">
-                <span class="nav-user">Angemeldet als <strong>{{ session.get('user_email', '') }}</strong></span>
+                <span class="nav-user">Angemeldet als <strong><!--email_off-->{{ session.get('user_email', '') }}<!--/email_off--></strong></span>
                 <a href="{{ url_for('today') }}" class="{% if request.endpoint == 'today' %}active{% endif %}">Heute</a>
                 <a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}">Verlauf</a>
                 <form method="POST" action="{{ url_for('logout') }}" class="logout-form">

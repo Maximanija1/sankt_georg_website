@@ -219,6 +219,10 @@ body {
     box-shadow: none;
 }
 
+.nav-links .logout-form::before {
+    display: none;
+}
+
 .nav-links button.logout {
     font: inherit;
     font-weight: 500;

@@ -127,6 +127,22 @@ def _jwt_exp(token):
         return None
 
 
+def _session_is_idle():
+    token = session.get("access_token")
+    refresh_token = session.get("refresh_token")
+    if not token or not refresh_token:
+        return True
+    now = int(datetime.now(pytz.utc).timestamp())
+    last_activity = session.get("last_activity", now)
+    return now - last_activity > IDLE_LIMIT_SECONDS
+
+
+def _expire_session():
+    app.logger.info("session_idle_timeout user_id=%s", session.get("user_id"))
+    session.clear()
+    flash("Sitzung abgelaufen. Bitte erneut anmelden.", "session_expired")
+
+
 def _ensure_fresh_token():
     token = session.get("access_token")
     refresh_token = session.get("refresh_token")
@@ -136,9 +152,7 @@ def _ensure_fresh_token():
     now = int(datetime.now(pytz.utc).timestamp())
     last_activity = session.get("last_activity", now)
     if now - last_activity > IDLE_LIMIT_SECONDS:
-        app.logger.info("session_idle_timeout user_id=%s", session.get("user_id"))
-        session.clear()
-        flash("Sitzung abgelaufen. Bitte erneut anmelden.", "session_expired")
+        _expire_session()
         return False
 
     exp = _jwt_exp(token)
@@ -163,13 +177,19 @@ def _ensure_fresh_token():
     return True
 
 
+def _unauthorized_response():
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "session_expired"}), 401
+    return redirect(url_for("login"))
+
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if "access_token" not in session:
-            return redirect(url_for("login"))
+            return _unauthorized_response()
         if not _ensure_fresh_token():
-            return redirect(url_for("login"))
+            return _unauthorized_response()
         return f(*args, **kwargs)
 
     return decorated
@@ -331,6 +351,16 @@ def api_codes():
     except Exception:
         app.logger.exception("api_codes: rpc dashboard_get_codes failed")
         return jsonify({"codes": [], "error": "Server error"}), 500
+
+
+@app.route("/api/session")
+def api_session():
+    if "access_token" not in session:
+        return jsonify({"ok": False, "expired": True}), 401
+    if _session_is_idle():
+        _expire_session()
+        return jsonify({"ok": False, "expired": True}), 401
+    return jsonify({"ok": True})
 
 
 @app.route("/healthz")
