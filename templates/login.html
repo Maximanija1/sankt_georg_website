@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmelden — ScanBuddy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    <div class="page-grain"></div>
+
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand">
+                    <span class="brand-mark">S</span>
+                    ScanBuddy
+                </div>
+                <p class="eyebrow">Dashboard</p>
+                <p class="subtitle">Anmelden mit Ihren ScanBuddy-Zugangsdaten</p>
+            </div>
+
+            {% for category, message in messages %}
+                {% if category != 'session_expired' %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="email">E-Mail</label>
+                <input type="email" id="email" name="email" required autocomplete="email" placeholder="ihre@email.de">
+
+                <label for="password">Passwort</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Passwort">
+
+                <button type="submit">Anmelden</button>
+            </form>
+        </div>
+    </div>
+
+    {% for category, message in messages %}
+        {% if category == 'session_expired' %}
+            <div class="modal-overlay visible" id="session-expired-modal" role="dialog" aria-modal="true" aria-labelledby="session-expired-title">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3 id="session-expired-title">Sitzung abgelaufen</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ message }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="session-expired-dismiss">Verstanden</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='login.js') }}"></script>
+</body>
+</html>

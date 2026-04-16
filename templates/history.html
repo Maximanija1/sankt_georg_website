@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<span class="eyebrow">Historische Daten</span>
+<h1>Verlauf</h1>
+
+<div class="history-layout">
+    <aside class="history-sidebar">
+        <h3>Datum w&auml;hlen</h3>
+        <form class="date-picker-group" action="{{ url_for('history') }}" method="get">
+            <label for="datePicker">Beliebiges Datum</label>
+            <div class="date-picker-row">
+                <input type="date" id="datePicker" name="date" value="{{ selected_date }}">
+                <button type="submit" class="btn-date-go">Anzeigen</button>
+            </div>
+        </form>
+
+        <h3>Letzte Scantage</h3>
+        <ul class="day-list">
+            {% for day in scan_days %}
+            <li>
+                <a href="{{ url_for('history', date=day.scan_date) }}"
+                    class="day-link {% if day.scan_date == selected_date %}active{% endif %}">
+                    <span class="day-date">{{ day.scan_date }}</span>
+                    <span class="day-count">{{ day.scan_count }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </aside>
+
+    <div class="history-content">
+        {% if selected_date %}
+        <h2>{{ selected_date }}</h2>
+
+        {% if medications %}
+        <div class="search-box">
+            <input type="text" class="search-input" id="searchInput" placeholder="Medikament oder PZN suchen...">
+        </div>
+
+        <table id="medicationTable" class="fixed-table {% if medications[0].user_email %}with-user{% endif %}">
+            {% if medications[0].user_email %}
+            <colgroup>
+                <col class="col-idx">
+                <col class="col-med">
+                <col class="col-mfr">
+                <col class="col-user">
+                <col class="col-count">
+                <col class="col-action">
+            </colgroup>
+            {% else %}
+            <colgroup>
+                <col class="col-idx">
+                <col class="col-med">
+                <col class="col-mfr">
+                <col class="col-count">
+                <col class="col-action">
+            </colgroup>
+            {% endif %}
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Medikament</th>
+                    <th>Hersteller</th>
+                    {% if medications[0].user_email %}
+                    <th>Benutzer</th>
+                    {% endif %}
+                    <th>Anzahl</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for med in medications %}
+                <tr class="medication-row"
+                    data-search="{{ med.product_name|lower }} {{ med.pzn|default('', true)|lower }} {{ med.manufacturer|lower }}">
+                    <td><strong>{{ loop.index }}</strong></td>
+                    <td>
+                        {% if med.product_name == 'Unbekannt' %}
+                        <span class="unknown">{{ med.product_name }}</span>
+                        {% else %}
+                        <span class="med-name">{{ med.product_name }}</span>
+                        {% endif %}
+                        {% if med.pzn %}<span class="pzn">PZN {{ med.pzn }}</span>{% endif %}
+                    </td>
+                    <td>{{ med.manufacturer }}</td>
+                    {% if med.user_email %}
+                    <td>{{ med.user_email }}</td>
+                    {% endif %}
+                    <td><span class="count-badge">{{ med.scan_count }}</span></td>
+                    <td>
+                        <button class="btn-copy"
+                            data-pzn="{{ med.pzn|default('', true) }}"
+                            data-date="{{ selected_date }}">
+                            Kopieren
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="summary">
+            Gesamt: <strong>{{ medications|sum(attribute='scan_count') }}</strong> Codes
+            bei <strong>{{ medications|length }}</strong> Medikamenten
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Keine Codes f&uuml;r diesen Tag vorhanden.</p>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <p>W&auml;hlen Sie einen Tag aus der Liste oder nutzen Sie den Datumsw&auml;hler.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
