@@ -281,8 +281,10 @@
     function updateCopiedCounter(detailRow, codes) {
         const el = detailRow.querySelector(".codes-copied-count");
         if (!el) return;
+        const total = codes.length;
         const copied = codes.filter(function (c) { return c.copied_at; }).length;
-        el.textContent = copied + " von " + codes.length + " kopiert";
+        const open = total - copied;
+        el.textContent = copied + " von " + total + " kopiert · " + open + " offen";
     }
 
     async function openDetailRow(summaryRow, detailRow) {
