@@ -481,7 +481,14 @@ table.fixed-table {
 }
 
 table.fixed-table .col-idx {
-    width: 3.5rem;
+    width: 4.5rem;
+}
+
+table.fixed-table td:nth-child(2),
+table.fixed-table th:nth-child(2) {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
 }
 
 table.fixed-table .col-med {
