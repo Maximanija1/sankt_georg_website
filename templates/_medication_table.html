@@ -1,6 +1,7 @@
 <table id="medicationTable" class="fixed-table {% if medications[0].user_email %}with-user{% endif %}">
     {% if medications[0].user_email %}
     <colgroup>
+        <col class="col-expand">
         <col class="col-idx">
         <col class="col-med">
         <col class="col-mfr">
@@ -10,6 +11,7 @@
     </colgroup>
     {% else %}
     <colgroup>
+        <col class="col-expand">
         <col class="col-idx">
         <col class="col-med">
         <col class="col-mfr">
@@ -19,6 +21,7 @@
     {% endif %}
     <thead>
         <tr>
+            <th class="col-expand"></th>
             <th>#</th>
             <th>Medikament</th>
             <th>Hersteller</th>
@@ -31,27 +34,27 @@
     </thead>
     <tbody>
         {% for med in medications %}
-        <tr class="medication-row"
-            data-search="{{ med.product_name|lower }} {{ med.pzn|default('', true)|lower }} {{ med.manufacturer|lower }}">
+        <tr class="medication-row {% if show_copy_modal %}med-summary{% endif %}"
+            data-search="{{ med.product_name|lower }} {{ med.pzn|default('', true)|lower }} {{ med.manufacturer|lower }}"
+            {% if show_copy_modal %}
+            data-pzn="{{ med.pzn|default('', true) }}"
+            data-from="{{ p_from }}"
+            data-to="{{ p_to }}"
+            {% endif %}>
+            <td class="expand-cell">
+                {% if show_copy_modal %}<span class="expand-icon">▶</span>{% endif %}
+            </td>
             <td><strong>{{ loop.index }}</strong></td>
             <td>
                 {% if med.product_name == 'Unbekannt' %}
                 <span class="unknown">{{ med.product_name }}</span>
                 {% else %}
-                {% if show_copy_modal %}
-                <button class="med-name-btn"
-                    data-pzn="{{ med.pzn|default('', true) }}"
-                    data-from="{{ p_from }}"
-                    data-to="{{ p_to }}"
-                    data-name="{{ med.product_name }}">{{ med.product_name }}</button>
-                {% if med.new_count and med.new_count > 0 %}
-                <span class="badge-neu">{{ med.new_count }} neu</span>
-                {% endif %}
-                {% else %}
                 <span class="med-name">{{ med.product_name }}</span>
                 {% endif %}
-                {% endif %}
                 {% if med.pzn %}<span class="pzn">PZN {{ med.pzn }}</span>{% endif %}
+                {% if show_copy_modal and med.new_count and med.new_count > 0 %}
+                <span class="badge-neu">{{ med.new_count }} neu</span>
+                {% endif %}
             </td>
             <td>{{ med.manufacturer }}</td>
             {% if med.user_email %}
@@ -63,10 +66,31 @@
                     data-pzn="{{ med.pzn|default('', true) }}"
                     data-from="{{ p_from }}"
                     data-to="{{ p_to }}">
-                    Kopieren
+                    Alle kopieren
                 </button>
             </td>
         </tr>
+        {% if show_copy_modal %}
+        <tr class="med-detail-row" hidden
+            data-pzn="{{ med.pzn|default('', true) }}"
+            data-from="{{ p_from }}"
+            data-to="{{ p_to }}">
+            <td colspan="{% if med.user_email %}7{% else %}6{% endif %}" class="med-detail-cell">
+                <div class="med-detail-inner">
+                    <div class="med-detail-toolbar">
+                        <div class="codes-select-row">
+                            <input type="number" class="codes-count-input" min="1" placeholder="Anzahl">
+                            <button class="btn-modal-action btn-select-n">Auswählen</button>
+                            <button class="btn-modal-copy btn-copy-selected" disabled>0 ausgewählt kopieren</button>
+                        </div>
+                        <button class="btn-modal-reset btn-reset-copied">Reset</button>
+                    </div>
+                    <div class="med-detail-loading">Laden...</div>
+                    <ul class="codes-list" hidden></ul>
+                </div>
+            </td>
+        </tr>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>

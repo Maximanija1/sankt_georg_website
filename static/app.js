@@ -79,93 +79,79 @@
         }
     }
 
-    // ---------- Codes modal ----------
-
-    let modalPzn = "";
-    let modalFrom = "";
-    let modalTo = "";
-    let modalCodes = [];
+    // ---------- Inline expand rows ----------
 
     function csrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
         return meta ? meta.content : "";
     }
 
-    function getSelectedIds() {
-        return modalCodes
-            .filter(function (c) { return c._checked; })
-            .map(function (c) { return c.id; });
+    function updateCopyBtn(detailRow, codes) {
+        const btn = detailRow.querySelector(".btn-copy-selected");
+        if (!btn) return;
+        const n = codes.filter(function (c) { return c._checked; }).length;
+        btn.disabled = n === 0;
+        btn.textContent = n + " ausgewählt kopieren";
     }
 
-    function updateCopyBtn() {
-        const copyBtn = document.getElementById("codesCopyBtn");
-        if (!copyBtn) return;
-        const n = getSelectedIds().length;
-        copyBtn.disabled = n === 0;
-        copyBtn.textContent = n + " ausgewählt kopieren";
-    }
-
-    function renderCodeList() {
-        const list = document.getElementById("codesList");
-        const loading = document.getElementById("codesLoading");
+    function renderCodeList(detailRow, codes) {
+        const loading = detailRow.querySelector(".med-detail-loading");
+        const list = detailRow.querySelector(".codes-list");
         if (!list) return;
 
         loading.hidden = true;
         list.hidden = false;
         list.innerHTML = "";
 
-        modalCodes.forEach(function (item, idx) {
+        codes.forEach(function (item, idx) {
             const li = document.createElement("li");
             li.className = "code-item" + (item.copied_at ? " is-copied" : "");
 
             const cb = document.createElement("input");
             cb.type = "checkbox";
             cb.checked = !!item._checked;
-            cb.id = "code-cb-" + idx;
+            cb.id = "code-cb-" + detailRow.dataset.pzn + "-" + idx;
 
-            const label = document.createElement("label");
-            label.htmlFor = "code-cb-" + idx;
-            label.className = "code-text";
-            label.textContent = item.code;
+            const lbl = document.createElement("label");
+            lbl.htmlFor = cb.id;
+            lbl.className = "code-text";
+            lbl.textContent = item.code;
 
             li.appendChild(cb);
-            li.appendChild(label);
+            li.appendChild(lbl);
 
             li.addEventListener("click", function (e) {
                 if (e.target === cb) return;
                 cb.checked = !cb.checked;
                 item._checked = cb.checked;
-                li.classList.toggle("is-selected", cb.checked);
-                updateCopyBtn();
+                updateCopyBtn(detailRow, codes);
             });
             cb.addEventListener("change", function () {
                 item._checked = cb.checked;
-                updateCopyBtn();
+                updateCopyBtn(detailRow, codes);
             });
 
             list.appendChild(li);
         });
 
-        updateCopyBtn();
+        updateCopyBtn(detailRow, codes);
     }
 
-    async function openCodesModal(pzn, from, to, name) {
-        const modal = document.getElementById("codesModal");
-        if (!modal) return;
+    async function openDetailRow(summaryRow, detailRow) {
+        const pzn = detailRow.dataset.pzn || "";
+        const from = detailRow.dataset.from;
+        const to = detailRow.dataset.to;
 
-        modalPzn = pzn;
-        modalFrom = from;
-        modalTo = to;
-        modalCodes = [];
+        const loading = detailRow.querySelector(".med-detail-loading");
+        const list = detailRow.querySelector(".codes-list");
+        loading.hidden = false;
+        loading.textContent = "Laden...";
+        list.hidden = true;
+        list.innerHTML = "";
+        detailRow.querySelector(".codes-count-input").value = "";
+        updateCopyBtn(detailRow, []);
 
-        document.getElementById("codesModalTitle").textContent = name;
-        document.getElementById("codesLoading").hidden = false;
-        document.getElementById("codesList").hidden = true;
-        document.getElementById("codesList").innerHTML = "";
-        document.getElementById("codesSelectCount").value = "";
-        updateCopyBtn();
-
-        modal.showModal();
+        detailRow._codes = [];
 
         try {
             const params = new URLSearchParams({ pzn: pzn, from: from, to: to });
@@ -175,147 +161,117 @@
             });
             if (res.status === 401) { redirectToLogin(); return; }
             const data = await res.json();
-            modalCodes = (data.codes || []).map(function (c) {
+            detailRow._codes = (data.codes || []).map(function (c) {
                 return { id: c.id, code: c.code, copied_at: c.copied_at, _checked: false };
             });
         } catch (_e) {
-            document.getElementById("codesLoading").textContent = "Fehler beim Laden.";
+            loading.textContent = "Fehler beim Laden.";
             return;
         }
 
-        renderCodeList();
+        renderCodeList(detailRow, detailRow._codes);
     }
 
-    function initCodesModal() {
-        const modal = document.getElementById("codesModal");
-        if (!modal) return;
+    function refreshNeuBadge(summaryRow, codes) {
+        const badge = summaryRow.querySelector(".badge-neu");
+        const maxCopiedAt = codes.reduce(function (max, c) {
+            return c.copied_at && (!max || c.copied_at > max) ? c.copied_at : max;
+        }, null);
+        const newCount = maxCopiedAt
+            ? codes.filter(function (c) { return !c.copied_at && c.scanned_at > maxCopiedAt; }).length
+            : 0;
+        if (badge) badge.textContent = newCount > 0 ? newCount + " neu" : "";
+        if (badge) badge.hidden = newCount === 0;
+    }
 
-        document.getElementById("codesModalClose").addEventListener("click", function () {
-            modal.close();
-        });
+    function initExpandRows() {
+        document.querySelectorAll(".med-summary").forEach(function (summaryRow) {
+            const detailRow = summaryRow.nextElementSibling;
+            if (!detailRow || !detailRow.classList.contains("med-detail-row")) return;
 
-        modal.addEventListener("click", function (e) {
-            if (e.target === modal) modal.close();
-        });
-
-        document.getElementById("codesSelectBtn").addEventListener("click", function () {
-            const n = parseInt(document.getElementById("codesSelectCount").value, 10);
-            if (!n || n < 1) return;
-            let remaining = n;
-            modalCodes.forEach(function (c) {
-                if (!c.copied_at && remaining > 0) {
-                    c._checked = true;
-                    remaining--;
+            summaryRow.addEventListener("click", function (e) {
+                if (e.target.closest(".btn-copy")) return;
+                const isOpen = !detailRow.hasAttribute("hidden");
+                if (isOpen) {
+                    detailRow.setAttribute("hidden", "");
+                    summaryRow.classList.remove("expanded");
                 } else {
-                    c._checked = false;
+                    detailRow.removeAttribute("hidden");
+                    summaryRow.classList.add("expanded");
+                    openDetailRow(summaryRow, detailRow);
                 }
             });
-            renderCodeList();
-        });
 
-        document.getElementById("codesCopyBtn").addEventListener("click", async function () {
-            const btn = this;
-            const selected = modalCodes.filter(function (c) { return c._checked; });
-            if (!selected.length) return;
-
-            const text = selected.map(function (c) { return c.code; }).join("\n");
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (_e) {
-                btn.textContent = "Kopieren fehlgeschlagen";
-                return;
-            }
-
-            const ids = selected.map(function (c) { return c.id; });
-            try {
-                await fetch("/api/codes/mark", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken(),
-                    },
-                    body: JSON.stringify({ ids: ids }),
+            detailRow.querySelector(".btn-select-n").addEventListener("click", function () {
+                const n = parseInt(detailRow.querySelector(".codes-count-input").value, 10);
+                if (!n || n < 1) return;
+                const codes = detailRow._codes || [];
+                let remaining = n;
+                codes.forEach(function (c) {
+                    if (!c.copied_at && remaining > 0) {
+                        c._checked = true;
+                        remaining--;
+                    } else {
+                        c._checked = false;
+                    }
                 });
-            } catch (_e) { /* mark failed silently */ }
-
-            const now = new Date().toISOString();
-            selected.forEach(function (c) {
-                c.copied_at = now;
-                c._checked = false;
+                renderCodeList(detailRow, codes);
             });
 
-            const originalText = btn.textContent;
-            btn.textContent = "Kopiert!";
-            btn.classList.add("copied");
-            renderCodeList();
-            setTimeout(function () {
-                btn.classList.remove("copied");
-                updateCopyBtn();
-            }, 2000);
+            detailRow.querySelector(".btn-copy-selected").addEventListener("click", async function (e) {
+                e.stopPropagation();
+                const btn = this;
+                const codes = detailRow._codes || [];
+                const selected = codes.filter(function (c) { return c._checked; });
+                if (!selected.length) return;
 
-            // refresh the "neu" badge on the table row
-            refreshNeuBadge(modalPzn, modalFrom, modalTo);
-        });
-
-        document.getElementById("codesResetBtn").addEventListener("click", async function () {
-            if (!confirm("Alle kopierten Markierungen zurücksetzen?")) return;
-            try {
-                await fetch("/api/codes/reset", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrfToken(),
-                    },
-                    body: JSON.stringify({ pzn: modalPzn, from: modalFrom, to: modalTo }),
-                });
-            } catch (_e) { /* reset failed silently */ }
-
-            modalCodes.forEach(function (c) {
-                c.copied_at = null;
-                c._checked = false;
-            });
-            renderCodeList();
-            refreshNeuBadge(modalPzn, modalFrom, modalTo);
-        });
-
-        document.querySelectorAll(".med-name-btn").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                openCodesModal(
-                    btn.dataset.pzn || "",
-                    btn.dataset.from,
-                    btn.dataset.to,
-                    btn.dataset.name
-                );
-            });
-        });
-    }
-
-    function refreshNeuBadge(pzn, from, to) {
-        document.querySelectorAll(".med-name-btn").forEach(function (btn) {
-            if (btn.dataset.pzn !== pzn || btn.dataset.from !== from) return;
-            const hasCopied = modalCodes.some(function (c) { return c.copied_at; });
-            const unchecked = modalCodes.filter(function (c) { return !c.copied_at; });
-            const maxCopiedAt = modalCodes.reduce(function (max, c) {
-                return c.copied_at && (!max || c.copied_at > max) ? c.copied_at : max;
-            }, null);
-            const newCount = maxCopiedAt
-                ? modalCodes.filter(function (c) { return !c.copied_at && c.scanned_at > maxCopiedAt; }).length
-                : 0;
-
-            const cell = btn.closest("td");
-            let badge = cell.querySelector(".badge-neu");
-            if (newCount > 0) {
-                if (!badge) {
-                    badge = document.createElement("span");
-                    badge.className = "badge-neu";
-                    btn.insertAdjacentElement("afterend", badge);
+                try {
+                    await navigator.clipboard.writeText(selected.map(function (c) { return c.code; }).join("\n"));
+                } catch (_e) {
+                    btn.textContent = "Kopieren fehlgeschlagen";
+                    return;
                 }
-                badge.textContent = newCount + " neu";
-            } else if (badge) {
-                badge.remove();
-            }
+
+                try {
+                    await fetch("/api/codes/mark", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                        body: JSON.stringify({ ids: selected.map(function (c) { return c.id; }) }),
+                    });
+                } catch (_e) { /* silent */ }
+
+                const now = new Date().toISOString();
+                selected.forEach(function (c) { c.copied_at = now; c._checked = false; });
+
+                btn.textContent = "Kopiert!";
+                btn.classList.add("copied");
+                renderCodeList(detailRow, codes);
+                refreshNeuBadge(summaryRow, codes);
+                setTimeout(function () { btn.classList.remove("copied"); }, 2000);
+            });
+
+            detailRow.querySelector(".btn-reset-copied").addEventListener("click", async function (e) {
+                e.stopPropagation();
+                if (!confirm("Alle kopierten Markierungen zurücksetzen?")) return;
+                const pzn = detailRow.dataset.pzn || "";
+                const from = detailRow.dataset.from;
+                const to = detailRow.dataset.to;
+
+                try {
+                    await fetch("/api/codes/reset", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                        body: JSON.stringify({ pzn: pzn, from: from, to: to }),
+                    });
+                } catch (_e) { /* silent */ }
+
+                const codes = detailRow._codes || [];
+                codes.forEach(function (c) { c.copied_at = null; c._checked = false; });
+                renderCodeList(detailRow, codes);
+                refreshNeuBadge(summaryRow, codes);
+            });
         });
     }
 
@@ -334,7 +290,7 @@
             });
         });
 
-        initCodesModal();
+        initExpandRows();
 
         ["pointerdown", "keydown", "input", "change", "copy", "paste", "cut"].forEach(
             function (evt) {
