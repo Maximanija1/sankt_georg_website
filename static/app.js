@@ -44,7 +44,7 @@
 
         try {
             const params = new URLSearchParams({ pzn: pzn, from: fromDate, to: toDate });
-            const response = await fetch("/api/codes?" + params.toString(), {
+            const response = await fetch("/api/codes/detail?" + params.toString(), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" },
             });
@@ -53,9 +53,47 @@
                 return;
             }
             const data = await response.json();
+            const codes = data.codes || [];
 
-            if (data.codes && data.codes.length > 0) {
-                await navigator.clipboard.writeText(data.codes.join("\n"));
+            if (codes.length > 0) {
+                await navigator.clipboard.writeText(
+                    codes.map(function (c) { return c.code; }).join("\n")
+                );
+
+                const unmarkedIds = codes
+                    .filter(function (c) { return !c.copied_at; })
+                    .map(function (c) { return c.id; });
+
+                if (unmarkedIds.length > 0) {
+                    try {
+                        await fetch("/api/codes/mark", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                            body: JSON.stringify({ ids: unmarkedIds }),
+                        });
+                    } catch (_e) { /* silent */ }
+                }
+
+                const summaryRow = btn.closest("tr");
+                const detailRow = summaryRow && summaryRow.nextElementSibling;
+                if (detailRow && detailRow.classList.contains("med-detail-row")) {
+                    const now = new Date().toISOString();
+                    const fresh = codes.map(function (c) {
+                        return {
+                            id: c.id,
+                            code: c.code,
+                            copied_at: c.copied_at || now,
+                            _checked: false,
+                        };
+                    });
+                    detailRow._codes = fresh;
+                    if (!detailRow.hasAttribute("hidden")) {
+                        renderCodeList(detailRow, fresh);
+                    }
+                    refreshNeuBadge(summaryRow, fresh);
+                }
+
                 btn.textContent = "Kopiert!";
                 btn.classList.add("copied");
                 setTimeout(function () {
@@ -77,6 +115,87 @@
                 btn.disabled = false;
             }, 2000);
         }
+    }
+
+    // ---------- Modal (confirm / info) ----------
+
+    let modalOverlay = null;
+    let modalCard, modalTitle, modalMessage, modalCancel, modalOk;
+    let modalPending = null;
+
+    function buildModal() {
+        modalOverlay = document.createElement("div");
+        modalOverlay.className = "modal-overlay";
+        modalOverlay.setAttribute("role", "dialog");
+        modalOverlay.setAttribute("aria-modal", "true");
+
+        modalCard = document.createElement("div");
+        modalCard.className = "modal-card";
+
+        const header = document.createElement("div");
+        header.className = "modal-header";
+        modalTitle = document.createElement("h3");
+        header.appendChild(modalTitle);
+
+        const body = document.createElement("div");
+        body.className = "modal-body";
+        modalMessage = document.createElement("p");
+        body.appendChild(modalMessage);
+
+        const footer = document.createElement("div");
+        footer.className = "modal-footer";
+        modalCancel = document.createElement("button");
+        modalCancel.type = "button";
+        modalCancel.className = "button-secondary";
+        modalOk = document.createElement("button");
+        modalOk.type = "button";
+        footer.appendChild(modalCancel);
+        footer.appendChild(modalOk);
+
+        modalCard.appendChild(header);
+        modalCard.appendChild(body);
+        modalCard.appendChild(footer);
+        modalOverlay.appendChild(modalCard);
+        document.body.appendChild(modalOverlay);
+
+        modalCancel.addEventListener("click", closeModal);
+        modalOk.addEventListener("click", confirmModal);
+        modalOverlay.addEventListener("click", function (e) {
+            if (e.target === modalOverlay) closeModal();
+        });
+        document.addEventListener("keydown", function (e) {
+            if (modalOverlay.classList.contains("visible") && e.key === "Escape") {
+                closeModal();
+            }
+        });
+    }
+
+    function openModal(options) {
+        if (!modalOverlay) buildModal();
+        modalTitle.textContent = options.title || "Bestätigen";
+        modalMessage.textContent = options.message || "";
+        modalOk.textContent = options.okText || "Bestätigen";
+        modalCancel.textContent = options.cancelText || "Abbrechen";
+        modalCancel.hidden = !!options.infoOnly;
+        modalCard.classList.toggle("modal-info", !!options.infoOnly);
+        modalPending = options;
+        modalOverlay.classList.add("visible");
+        setTimeout(function () {
+            (options.infoOnly ? modalOk : modalCancel).focus();
+        }, 0);
+    }
+
+    function closeModal() {
+        if (!modalOverlay) return;
+        modalOverlay.classList.remove("visible");
+        modalPending = null;
+    }
+
+    function confirmModal() {
+        const p = modalPending;
+        modalOverlay.classList.remove("visible");
+        modalPending = null;
+        if (p && typeof p.onConfirm === "function") p.onConfirm();
     }
 
     // ---------- Inline expand rows ----------
@@ -104,12 +223,14 @@
         list.innerHTML = "";
 
         codes.forEach(function (item, idx) {
+            const isCopied = !!item.copied_at;
             const li = document.createElement("li");
-            li.className = "code-item" + (item.copied_at ? " is-copied" : "");
+            li.className = "code-item" + (isCopied ? " is-copied" : "");
 
             const cb = document.createElement("input");
             cb.type = "checkbox";
             cb.checked = !!item._checked;
+            cb.disabled = isCopied;
             cb.id = "code-cb-" + detailRow.dataset.pzn + "-" + idx;
 
             const lbl = document.createElement("label");
@@ -120,21 +241,48 @@
             li.appendChild(cb);
             li.appendChild(lbl);
 
-            li.addEventListener("click", function (e) {
-                if (e.target === cb) return;
-                cb.checked = !cb.checked;
-                item._checked = cb.checked;
-                updateCopyBtn(detailRow, codes);
-            });
-            cb.addEventListener("change", function () {
-                item._checked = cb.checked;
-                updateCopyBtn(detailRow, codes);
-            });
+            if (!isCopied) {
+                li.addEventListener("click", function (e) {
+                    if (e.target === cb) return;
+                    cb.checked = !cb.checked;
+                    item._checked = cb.checked;
+                    updateCopyBtn(detailRow, codes);
+                });
+                cb.addEventListener("change", function () {
+                    item._checked = cb.checked;
+                    updateCopyBtn(detailRow, codes);
+                });
+            }
 
             list.appendChild(li);
         });
 
+        updateCountInputMax(detailRow, codes);
+        updateCopiedCounter(detailRow, codes);
         updateCopyBtn(detailRow, codes);
+    }
+
+    function availableCount(codes) {
+        return codes.filter(function (c) { return !c.copied_at; }).length;
+    }
+
+    function updateCountInputMax(detailRow, codes) {
+        const input = detailRow.querySelector(".codes-count-input");
+        if (!input) return;
+        const max = availableCount(codes);
+        input.max = max;
+        input.disabled = max === 0;
+        if (input.value) {
+            const n = parseInt(input.value, 10);
+            if (n > max) input.value = max > 0 ? max : "";
+        }
+    }
+
+    function updateCopiedCounter(detailRow, codes) {
+        const el = detailRow.querySelector(".codes-copied-count");
+        if (!el) return;
+        const copied = codes.filter(function (c) { return c.copied_at; }).length;
+        el.textContent = copied + " von " + codes.length + " kopiert";
     }
 
     async function openDetailRow(summaryRow, detailRow) {
@@ -202,10 +350,21 @@
                 }
             });
 
-            detailRow.querySelector(".btn-select-n").addEventListener("click", function () {
-                const n = parseInt(detailRow.querySelector(".codes-count-input").value, 10);
-                if (!n || n < 1) return;
+            const countInput = detailRow.querySelector(".codes-count-input");
+            countInput.addEventListener("input", function () {
                 const codes = detailRow._codes || [];
+                const max = availableCount(codes);
+                const n = parseInt(countInput.value, 10);
+                if (!isNaN(n) && n > max) countInput.value = max;
+                if (!isNaN(n) && n < 1) countInput.value = "";
+            });
+
+            detailRow.querySelector(".btn-select-n").addEventListener("click", function () {
+                const codes = detailRow._codes || [];
+                const max = availableCount(codes);
+                let n = parseInt(countInput.value, 10);
+                if (!n || n < 1) return;
+                if (n > max) n = max;
                 let remaining = n;
                 codes.forEach(function (c) {
                     if (!c.copied_at && remaining > 0) {
@@ -251,26 +410,39 @@
                 setTimeout(function () { btn.classList.remove("copied"); }, 2000);
             });
 
-            detailRow.querySelector(".btn-reset-copied").addEventListener("click", async function (e) {
+            detailRow.querySelector(".btn-reset-copied").addEventListener("click", function (e) {
                 e.stopPropagation();
-                if (!confirm("Alle kopierten Markierungen zurücksetzen?")) return;
-                const pzn = detailRow.dataset.pzn || "";
-                const from = detailRow.dataset.from;
-                const to = detailRow.dataset.to;
+                openModal({
+                    title: "Zurücksetzen bestätigen",
+                    message: "Alle kopierten Markierungen zurücksetzen?",
+                    okText: "Zurücksetzen",
+                    onConfirm: async function () {
+                        const pzn = detailRow.dataset.pzn || "";
+                        const from = detailRow.dataset.from;
+                        const to = detailRow.dataset.to;
 
-                try {
-                    await fetch("/api/codes/reset", {
-                        method: "POST",
-                        credentials: "same-origin",
-                        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
-                        body: JSON.stringify({ pzn: pzn, from: from, to: to }),
-                    });
-                } catch (_e) { /* silent */ }
+                        try {
+                            await fetch("/api/codes/reset", {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                                body: JSON.stringify({ pzn: pzn, from: from, to: to }),
+                            });
+                        } catch (_e) { /* silent */ }
 
-                const codes = detailRow._codes || [];
-                codes.forEach(function (c) { c.copied_at = null; c._checked = false; });
-                renderCodeList(detailRow, codes);
-                refreshNeuBadge(summaryRow, codes);
+                        const codes = detailRow._codes || [];
+                        codes.forEach(function (c) { c.copied_at = null; c._checked = false; });
+                        renderCodeList(detailRow, codes);
+                        refreshNeuBadge(summaryRow, codes);
+
+                        openModal({
+                            title: "Zurückgesetzt",
+                            message: "Alle Markierungen wurden zurückgesetzt.",
+                            okText: "OK",
+                            infoOnly: true,
+                        });
+                    },
+                });
             });
         });
     }

@@ -254,7 +254,10 @@ def today():
         result = client.rpc(
             "dashboard_get_medications", {"p_from": p_from, "p_to": p_to}
         ).execute()
-        medications = result.data or []
+        medications = sorted(
+            result.data or [],
+            key=lambda m: (m.get("product_name") or "").casefold(),
+        )
     except Exception:
         app.logger.exception("today: rpc dashboard_get_medications failed")
         medications = []
@@ -294,7 +297,10 @@ def history():
             result = client.rpc(
                 "dashboard_get_medications", {"p_from": p_from, "p_to": p_to}
             ).execute()
-            medications = result.data or []
+            medications = sorted(
+                result.data or [],
+                key=lambda m: (m.get("product_name") or "").casefold(),
+            )
         except ValueError:
             flash("Ungültiges Datum.", "error")
         except Exception:

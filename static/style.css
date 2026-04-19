@@ -497,7 +497,12 @@ table.fixed-table .col-count {
 }
 
 table.fixed-table .col-action {
-    width: 8rem;
+    width: 10rem;
+}
+
+table.fixed-table td:last-child,
+table.fixed-table th:last-child {
+    padding-right: 2rem;
 }
 
 table.fixed-table.with-user .col-user {
@@ -1109,6 +1114,14 @@ main.container>*:nth-child(5) {
     background: var(--success);
 }
 
+.codes-copied-count {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
 .btn-modal-reset {
     background: none;
     border: 1px solid var(--rule);
@@ -1151,7 +1164,10 @@ main.container>*:nth-child(5) {
 
 .code-item.is-copied {
     opacity: 0.45;
+    cursor: default;
 }
+
+.code-item.is-copied:hover { background: transparent; }
 
 .code-item.is-copied .code-text {
     text-decoration: line-through;
@@ -1167,12 +1183,105 @@ main.container>*:nth-child(5) {
     margin: 0;
 }
 
+.code-item input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}
+
 .code-text {
     font-family: "JetBrains Mono", ui-monospace, monospace;
     font-size: 0.78rem;
     color: var(--ink);
     letter-spacing: -0.01em;
     word-break: break-all;
+}
+
+/* ---------- Confirmation / Info modal ---------- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 24, 20, 0.52);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.modal-overlay.visible { display: flex; }
+
+.modal-card {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    box-shadow: var(--lift-3);
+    border: 1px solid var(--rule);
+    max-width: 460px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transform: translateY(14px);
+    transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modal-overlay.visible .modal-card { transform: translateY(0); }
+
+.modal-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 1.6rem;
+    width: 3.5rem; height: 3px;
+    background: var(--amber);
+    border-radius: 0 0 2px 2px;
+}
+
+.modal-card.modal-info::before { background: var(--bottle); }
+
+.modal-header {
+    padding: 1.5rem 1.75rem 1rem;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.modal-header h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 1.15rem;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin: 0;
+}
+
+.modal-body { padding: 1.25rem 1.75rem; }
+
+.modal-body p {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    margin: 0;
+    max-width: none;
+}
+
+.modal-footer {
+    padding: 1rem 1.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid var(--rule-soft);
+}
+
+.modal-footer button { margin-top: 0; }
+
+.button-secondary {
+    background: none;
+    color: var(--ink-mute);
+    border: 1px solid var(--rule);
+    box-shadow: none;
+}
+
+.button-secondary:hover {
+    background: var(--paper-deep);
+    color: var(--ink);
+    box-shadow: none;
 }
 
 /* ---------- Responsive ---------- */
