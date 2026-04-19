@@ -9,7 +9,31 @@
     <input type="text" class="search-input" id="searchInput" placeholder="Medikament oder PZN suchen...">
 </div>
 
+{% set show_copy_modal = true %}
 {% include "_medication_table.html" %}
+
+<dialog id="codesModal" class="codes-modal">
+    <div class="codes-modal-inner">
+        <div class="codes-modal-header">
+            <h2 id="codesModalTitle" class="codes-modal-title"></h2>
+            <button class="codes-modal-close" id="codesModalClose" aria-label="Schließen">&times;</button>
+        </div>
+
+        <div class="codes-modal-toolbar">
+            <div class="codes-select-row">
+                <input type="number" id="codesSelectCount" class="codes-count-input" min="1" placeholder="Anzahl">
+                <button id="codesSelectBtn" class="btn-modal-action">Auswählen</button>
+                <button id="codesCopyBtn" class="btn-modal-copy" disabled>0 ausgewählt kopieren</button>
+            </div>
+            <button id="codesResetBtn" class="btn-modal-reset">Reset</button>
+        </div>
+
+        <div id="codesListWrap" class="codes-list-wrap">
+            <div id="codesLoading" class="codes-loading">Laden...</div>
+            <ul id="codesList" class="codes-list" hidden></ul>
+        </div>
+    </div>
+</dialog>
 {% else %}
 <div class="empty-state">
     <p>Keine Codes f&uuml;r heute vorhanden.</p>

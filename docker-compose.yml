@@ -1,8 +1,8 @@
 services:
-  sankt-georg-app:
+  scanbuddy-app:
     build: .
-    image: sankt-georg-app:latest
-    container_name: sankt-georg-app
+    image: scanbuddy-app:latest
+    container_name: scanbuddy-app
     restart: unless-stopped
     env_file:
       - .env

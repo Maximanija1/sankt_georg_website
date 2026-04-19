@@ -48,7 +48,7 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_NAME="__Host-sankt_georg_session",
+    SESSION_COOKIE_NAME="__Host-scanbuddy_session",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=1 * 1024 * 1024,
     PREFERRED_URL_SCHEME="https",
@@ -337,6 +337,82 @@ def api_codes():
     except Exception:
         app.logger.exception("api_codes: rpc dashboard_get_codes failed")
         return jsonify({"codes": [], "error": "Server error"}), 500
+
+
+@app.route("/api/codes/detail")
+@login_required
+@limiter.limit("60 per minute")
+def api_codes_detail():
+    token = session["access_token"]
+    pzn = request.args.get("pzn", "")
+    p_from = request.args.get("from", "")
+    p_to = request.args.get("to", "")
+
+    if not p_from or not p_to:
+        return jsonify({"codes": [], "error": "Missing time range"}), 400
+
+    try:
+        client = get_supabase_client(token)
+        result = client.rpc(
+            "dashboard_get_codes", {"p_from": p_from, "p_to": p_to, "p_pzn": pzn}
+        ).execute()
+        codes = [
+            {
+                "id": row["id"],
+                "code": row["formatted_code"],
+                "copied_at": row.get("copied_at"),
+            }
+            for row in (result.data or [])
+        ]
+        return jsonify({"codes": codes})
+    except Exception:
+        app.logger.exception("api_codes_detail: rpc dashboard_get_codes failed")
+        return jsonify({"codes": [], "error": "Server error"}), 500
+
+
+@app.route("/api/codes/mark", methods=["POST"])
+@login_required
+@limiter.limit("60 per minute")
+def api_codes_mark():
+    token = session["access_token"]
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids", [])
+
+    if not ids or not isinstance(ids, list):
+        return jsonify({"error": "Missing ids"}), 400
+
+    try:
+        client = get_supabase_client(token)
+        client.rpc("dashboard_mark_codes_copied", {"p_ids": ids}).execute()
+        return jsonify({"ok": True})
+    except Exception:
+        app.logger.exception("api_codes_mark: rpc dashboard_mark_codes_copied failed")
+        return jsonify({"error": "Server error"}), 500
+
+
+@app.route("/api/codes/reset", methods=["POST"])
+@login_required
+@limiter.limit("30 per minute")
+def api_codes_reset():
+    token = session["access_token"]
+    data = request.get_json(silent=True) or {}
+    pzn = data.get("pzn", "")
+    p_from = data.get("from", "")
+    p_to = data.get("to", "")
+
+    if not p_from or not p_to:
+        return jsonify({"error": "Missing time range"}), 400
+
+    try:
+        client = get_supabase_client(token)
+        client.rpc(
+            "dashboard_reset_copied",
+            {"p_pzn": pzn, "p_from": p_from, "p_to": p_to},
+        ).execute()
+        return jsonify({"ok": True})
+    except Exception:
+        app.logger.exception("api_codes_reset: rpc dashboard_reset_copied failed")
+        return jsonify({"error": "Server error"}), 500
 
 
 @app.route("/api/session")

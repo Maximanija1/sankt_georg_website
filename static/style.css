@@ -982,6 +982,265 @@ main.container>*:nth-child(5) {
     }
 }
 
+/* ---------- Medication name button ---------- */
+.med-name-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    font-weight: 600;
+    font-size: inherit;
+    font-family: inherit;
+    color: var(--bottle);
+    cursor: pointer;
+    text-align: left;
+    display: block;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 2px;
+    transition: color 120ms, text-decoration-color 120ms;
+    margin-top: 0;
+}
+
+.med-name-btn:hover {
+    color: var(--bottle-deep);
+    text-decoration-color: var(--bottle);
+    background: none;
+    box-shadow: none;
+    transform: none;
+}
+
+.badge-neu {
+    display: inline-flex;
+    align-items: center;
+    background: var(--terracotta-soft);
+    color: var(--terracotta);
+    border: 1px solid var(--terracotta);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+}
+
+/* ---------- Codes modal ---------- */
+.codes-modal {
+    position: fixed;
+    inset: 0;
+    width: min(700px, 96vw);
+    max-height: 85vh;
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    box-shadow: var(--lift-3);
+    background: var(--card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.codes-modal::backdrop {
+    background: rgba(26, 24, 20, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+.codes-modal-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 85vh;
+}
+
+.codes-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--rule-soft);
+    flex-shrink: 0;
+}
+
+.codes-modal-title {
+    font-family: "Fraunces", serif;
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+}
+
+.codes-modal-title::after {
+    display: none;
+}
+
+.codes-modal-close {
+    background: none;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--ink-mute);
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    transition: background 120ms, color 120ms;
+}
+
+.codes-modal-close:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+    box-shadow: none;
+    transform: none;
+}
+
+.codes-modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--rule-soft);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.codes-select-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.codes-count-input {
+    width: 90px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.btn-modal-action {
+    background: var(--bottle-tint);
+    color: var(--bottle);
+    border: 1px solid var(--bottle-soft);
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    margin: 0;
+    box-shadow: none;
+}
+
+.btn-modal-action:hover {
+    background: var(--bottle-soft);
+    color: var(--bottle-deep);
+    box-shadow: none;
+}
+
+.btn-modal-copy {
+    background: var(--bottle);
+    color: var(--card-raised);
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    margin: 0;
+    box-shadow: 0 1px 0 var(--bottle-deep);
+}
+
+.btn-modal-copy:hover {
+    background: var(--bottle-deep);
+}
+
+.btn-modal-copy:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.btn-modal-copy.copied {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.btn-modal-reset {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-mute);
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+    margin: 0;
+    box-shadow: none;
+}
+
+.btn-modal-reset:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: var(--danger);
+    box-shadow: none;
+}
+
+.codes-list-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem 1.5rem 1.25rem;
+}
+
+.codes-loading {
+    text-align: center;
+    color: var(--ink-mute);
+    padding: 2rem 0;
+    font-size: 0.9rem;
+}
+
+.codes-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.code-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: background 100ms;
+    user-select: none;
+}
+
+.code-item:hover {
+    background: var(--bottle-tint);
+}
+
+.code-item.is-copied {
+    opacity: 0.45;
+}
+
+.code-item.is-copied .code-text {
+    text-decoration: line-through;
+    color: var(--ink-mute);
+}
+
+.code-item input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    accent-color: var(--bottle);
+    cursor: pointer;
+    margin: 0;
+}
+
+.code-text {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    word-break: break-all;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 720px) {
     .nav-inner {

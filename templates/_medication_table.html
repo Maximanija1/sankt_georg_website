@@ -38,7 +38,18 @@
                 {% if med.product_name == 'Unbekannt' %}
                 <span class="unknown">{{ med.product_name }}</span>
                 {% else %}
+                {% if show_copy_modal %}
+                <button class="med-name-btn"
+                    data-pzn="{{ med.pzn|default('', true) }}"
+                    data-from="{{ p_from }}"
+                    data-to="{{ p_to }}"
+                    data-name="{{ med.product_name }}">{{ med.product_name }}</button>
+                {% if med.new_count and med.new_count > 0 %}
+                <span class="badge-neu">{{ med.new_count }} neu</span>
+                {% endif %}
+                {% else %}
                 <span class="med-name">{{ med.product_name }}</span>
+                {% endif %}
                 {% endif %}
                 {% if med.pzn %}<span class="pzn">PZN {{ med.pzn }}</span>{% endif %}
             </td>
