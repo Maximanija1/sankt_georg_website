@@ -1,4 +1,4 @@
-<table id="medicationTable" class="fixed-table {% if medications[0].user_email %}with-user{% endif %}">
+<table class="fixed-table {% if medications[0].user_email %}with-user{% endif %}">
     {% if medications[0].user_email %}
     <colgroup>
         <col class="col-expand">
@@ -40,6 +40,7 @@
             data-pzn="{{ med.pzn|default('', true) }}"
             data-from="{{ p_from }}"
             data-to="{{ p_to }}"
+            {% if session_at %}data-session-at="{{ session_at }}"{% endif %}
             {% endif %}>
             <td class="expand-cell">
                 {% if show_copy_modal %}<span class="expand-icon">▶</span>{% endif %}
@@ -70,17 +71,20 @@
             <td>
                 <span class="count-wrap">
                     <span class="count-badge">{{ med.scan_count }}</span>
+                    {% if show_copy_modal %}
                     <span class="all-copied-tick" aria-label="Alle kopiert" title="Alle kopiert"
                           {% if not (med.scan_count and (med.copied_count or 0) >= med.scan_count) %}hidden{% endif %}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                     </span>
+                    {% endif %}
                 </span>
             </td>
             <td>
                 <button class="btn-copy"
                     data-pzn="{{ med.pzn|default('', true) }}"
                     data-from="{{ p_from }}"
-                    data-to="{{ p_to }}">
+                    data-to="{{ p_to }}"
+                    {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
                     Alle kopieren
                 </button>
             </td>
@@ -89,7 +93,8 @@
         <tr class="med-detail-row" hidden
             data-pzn="{{ med.pzn|default('', true) }}"
             data-from="{{ p_from }}"
-            data-to="{{ p_to }}">
+            data-to="{{ p_to }}"
+            {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
             <td colspan="{% if med.user_email %}7{% else %}6{% endif %}" class="med-detail-cell">
                 <div class="med-detail-inner">
                     <div class="med-detail-toolbar">
@@ -111,7 +116,9 @@
     </tbody>
 </table>
 
+{% if show_summary is not defined or show_summary %}
 <div class="summary">
     Gesamt: <strong>{{ medications|sum(attribute='scan_count') }}</strong> Codes
     bei <strong>{{ medications|length }}</strong> Medikamenten
 </div>
+{% endif %}

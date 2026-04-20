@@ -4,13 +4,31 @@
 <span class="eyebrow">Tagesansicht</span>
 <h1>Heute</h1>
 
-{% if medications %}
+{% if sessions %}
 <div class="search-box">
     <input type="text" class="search-input" id="searchInput" placeholder="Medikament oder PZN suchen...">
 </div>
 
-{% set show_copy_modal = true %}
-{% include "_medication_table.html" %}
+{% for session in sessions %}
+<section class="session-group">
+    <h2 class="session-header">
+        <span class="session-label">Lieferschein {{ loop.index }}</span>
+        <span class="session-time">{{ session.time_display }}</span>
+        {% if session.user_email %}<span class="session-user">{{ session.user_email }}</span>{% endif %}
+    </h2>
+    {% set medications = session.medications %}
+    {% set show_copy_modal = true %}
+    {% set show_summary = false %}
+    {% set session_at = session.session_at %}
+    {% include "_medication_table.html" %}
+</section>
+{% endfor %}
+
+<div class="summary">
+    Gesamt: <strong>{{ total_codes }}</strong> Codes
+    bei <strong>{{ total_meds }}</strong> Medikamenten
+    in <strong>{{ sessions|length }}</strong> Lieferscheinen
+</div>
 {% else %}
 <div class="empty-state">
     <p>Keine Codes f&uuml;r heute vorhanden.</p>

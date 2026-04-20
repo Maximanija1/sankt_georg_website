@@ -243,6 +243,36 @@ def logout():
 # ---------- PAGES ----------
 
 
+def _format_session_time(iso_str):
+    if not iso_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        return dt.astimezone(TIMEZONE).strftime("%H:%M")
+    except Exception:
+        return iso_str
+
+
+def _build_sessions(rows):
+    groups = {}
+    for row in rows:
+        key = (row.get("session_at"), row.get("user_email"))
+        if key not in groups:
+            groups[key] = {
+                "session_at": row.get("session_at"),
+                "user_email": row.get("user_email"),
+                "time_display": _format_session_time(row.get("session_at")),
+                "medications": [],
+            }
+        groups[key]["medications"].append(row)
+
+    sessions = list(groups.values())
+    sessions.sort(key=lambda s: (s["session_at"] or "", s["user_email"] or ""))
+    for s in sessions:
+        s["medications"].sort(key=lambda m: (m.get("product_name") or "").casefold())
+    return sessions
+
+
 @app.route("/")
 @login_required
 def today():
@@ -252,20 +282,23 @@ def today():
     try:
         client = get_supabase_client(token)
         result = client.rpc(
-            "dashboard_get_medications", {"p_from": p_from, "p_to": p_to}
+            "dashboard_get_sessions", {"p_from": p_from, "p_to": p_to}
         ).execute()
-        medications = sorted(
-            result.data or [],
-            key=lambda m: (m.get("product_name") or "").casefold(),
-        )
+        rows = result.data or []
     except Exception:
-        app.logger.exception("today: rpc dashboard_get_medications failed")
-        medications = []
+        app.logger.exception("today: rpc dashboard_get_sessions failed")
+        rows = []
         flash("Fehler beim Laden der Daten.", "error")
+
+    sessions = _build_sessions(rows)
+    total_codes = sum(m["scan_count"] for s in sessions for m in s["medications"])
+    total_meds = sum(len(s["medications"]) for s in sessions)
 
     return render_template(
         "today.html",
-        medications=medications,
+        sessions=sessions,
+        total_codes=total_codes,
+        total_meds=total_meds,
         user_email=session.get("user_email", ""),
         p_from=p_from,
         p_to=p_to,
@@ -353,15 +386,17 @@ def api_codes_detail():
     pzn = request.args.get("pzn", "")
     p_from = request.args.get("from", "")
     p_to = request.args.get("to", "")
+    session_at = request.args.get("session_at", "")
 
     if not p_from or not p_to:
         return jsonify({"codes": [], "error": "Missing time range"}), 400
 
     try:
         client = get_supabase_client(token)
-        result = client.rpc(
-            "dashboard_get_codes", {"p_from": p_from, "p_to": p_to, "p_pzn": pzn}
-        ).execute()
+        params = {"p_from": p_from, "p_to": p_to, "p_pzn": pzn}
+        if session_at:
+            params["p_session_at"] = session_at
+        result = client.rpc("dashboard_get_codes", params).execute()
         codes = [
             {
                 "id": row["id"],
@@ -405,16 +440,17 @@ def api_codes_reset():
     pzn = data.get("pzn", "")
     p_from = data.get("from", "")
     p_to = data.get("to", "")
+    session_at = data.get("session_at", "")
 
     if not p_from or not p_to:
         return jsonify({"error": "Missing time range"}), 400
 
     try:
         client = get_supabase_client(token)
-        client.rpc(
-            "dashboard_reset_copied",
-            {"p_pzn": pzn, "p_from": p_from, "p_to": p_to},
-        ).execute()
+        params = {"p_pzn": pzn, "p_from": p_from, "p_to": p_to}
+        if session_at:
+            params["p_session_at"] = session_at
+        client.rpc("dashboard_reset_copied", params).execute()
         return jsonify({"ok": True})
     except Exception:
         app.logger.exception("api_codes_reset: rpc dashboard_reset_copied failed")

@@ -822,6 +822,44 @@ td strong,
     box-shadow: 0 0 0 4px var(--bottle-glow);
 }
 
+/* ---------- Session groups (Lieferscheine) ---------- */
+.session-group {
+    margin-bottom: 2.25rem;
+}
+
+.session-group table { margin-bottom: 0; }
+
+.session-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 1.5rem 0 0.6rem;
+    padding-left: 0.1rem;
+}
+
+.session-label { color: var(--bottle); }
+
+.session-time {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.session-user {
+    font-family: "Geist", sans-serif;
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+    font-weight: 500;
+    margin-left: auto;
+}
+
 /* ---------- Summary ---------- */
 .summary {
     background: var(--card);

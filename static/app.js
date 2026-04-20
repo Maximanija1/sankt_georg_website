@@ -39,11 +39,13 @@
 
     async function copyCodesForMedication(pzn, fromDate, toDate, btn) {
         const originalText = btn.textContent;
+        const sessionAt = btn.dataset.sessionAt || "";
         btn.disabled = true;
         btn.textContent = "Laden...";
 
         try {
             const params = new URLSearchParams({ pzn: pzn, from: fromDate, to: toDate });
+            if (sessionAt) params.set("session_at", sessionAt);
             const response = await fetch("/api/codes/detail?" + params.toString(), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" },
@@ -292,6 +294,7 @@
         const pzn = detailRow.dataset.pzn || "";
         const from = detailRow.dataset.from;
         const to = detailRow.dataset.to;
+        const sessionAt = detailRow.dataset.sessionAt || "";
 
         const loading = detailRow.querySelector(".med-detail-loading");
         const list = detailRow.querySelector(".codes-list");
@@ -306,6 +309,7 @@
 
         try {
             const params = new URLSearchParams({ pzn: pzn, from: from, to: to });
+            if (sessionAt) params.set("session_at", sessionAt);
             const res = await fetch("/api/codes/detail?" + params.toString(), {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" },
@@ -444,13 +448,16 @@
                         const pzn = detailRow.dataset.pzn || "";
                         const from = detailRow.dataset.from;
                         const to = detailRow.dataset.to;
+                        const sessionAt = detailRow.dataset.sessionAt || "";
 
                         try {
+                            const body = { pzn: pzn, from: from, to: to };
+                            if (sessionAt) body.session_at = sessionAt;
                             await fetch("/api/codes/reset", {
                                 method: "POST",
                                 credentials: "same-origin",
                                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
-                                body: JSON.stringify({ pzn: pzn, from: from, to: to }),
+                                body: JSON.stringify(body),
                             });
                         } catch (_e) { /* silent */ }
 
