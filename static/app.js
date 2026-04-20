@@ -30,10 +30,22 @@
         const input = document.getElementById("searchInput");
         if (!input) return;
         const query = input.value.toLowerCase();
-        const rows = document.querySelectorAll(".medication-row");
-        rows.forEach(function (row) {
+
+        document.querySelectorAll(".medication-row").forEach(function (row) {
             const searchText = row.getAttribute("data-search") || "";
-            row.style.display = searchText.includes(query) ? "" : "none";
+            const match = searchText.includes(query);
+            row.style.display = match ? "" : "none";
+            const detail = row.nextElementSibling;
+            if (detail && detail.classList.contains("med-detail-row")) {
+                detail.style.display = match ? "" : "none";
+            }
+        });
+
+        document.querySelectorAll(".session-group").forEach(function (group) {
+            const hasVisible = Array.from(
+                group.querySelectorAll(".medication-row")
+            ).some(function (r) { return r.style.display !== "none"; });
+            group.style.display = hasVisible ? "" : "none";
         });
     }
 
