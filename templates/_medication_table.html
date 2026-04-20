@@ -51,7 +51,14 @@
                 {% else %}
                 <span class="med-name">{{ med.product_name }}</span>
                 {% endif %}
-                {% if med.pzn %}<span class="pzn">PZN {{ med.pzn }}</span>{% endif %}
+                {% if med.pzn %}
+                <span class="pzn">
+                    PZN {{ med.pzn }}
+                    <button type="button" class="btn-copy-pzn" data-pzn="{{ med.pzn }}" title="PZN kopieren" aria-label="PZN kopieren">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                </span>
+                {% endif %}
                 {% if show_copy_modal and med.new_count and med.new_count > 0 %}
                 <span class="badge-neu">{{ med.new_count }} neu</span>
                 {% endif %}
@@ -60,7 +67,15 @@
             {% if med.user_email %}
             <td>{{ med.user_email }}</td>
             {% endif %}
-            <td><span class="count-badge">{{ med.scan_count }}</span></td>
+            <td>
+                <span class="count-wrap">
+                    <span class="count-badge">{{ med.scan_count }}</span>
+                    <span class="all-copied-tick" aria-label="Alle kopiert" title="Alle kopiert"
+                          {% if not (med.scan_count and (med.copied_count or 0) >= med.scan_count) %}hidden{% endif %}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                </span>
+            </td>
             <td>
                 <button class="btn-copy"
                     data-pzn="{{ med.pzn|default('', true) }}"

@@ -599,10 +599,44 @@ td strong,
     font-family: "JetBrains Mono", ui-monospace, monospace;
     font-size: 0.72rem;
     color: var(--ink-mute);
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     margin-top: 2px;
     letter-spacing: -0.01em;
 }
+
+.btn-copy-pzn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--ink-mute);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 1px 4px;
+    margin: 0;
+    line-height: 0;
+    cursor: pointer;
+    box-shadow: none;
+    font-size: inherit;
+    transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.btn-copy-pzn:hover {
+    background: var(--bottle-tint);
+    color: var(--bottle);
+    border-color: var(--bottle-soft);
+    box-shadow: none;
+}
+
+.btn-copy-pzn.copied {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.btn-copy-pzn svg { display: block; }
 
 .count-badge {
     display: inline-flex;
@@ -617,6 +651,26 @@ td strong,
     font-weight: 600;
     min-width: 2rem;
 }
+
+.count-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.all-copied-tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--success-soft);
+    color: var(--success);
+    line-height: 0;
+}
+
+.all-copied-tick[hidden] { display: none; }
 
 /* ---------- Errors / Flash ---------- */
 .flash {

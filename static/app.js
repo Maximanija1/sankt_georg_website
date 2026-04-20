@@ -77,22 +77,23 @@
 
                 const summaryRow = btn.closest("tr");
                 const detailRow = summaryRow && summaryRow.nextElementSibling;
+                const now = new Date().toISOString();
+                const fresh = codes.map(function (c) {
+                    return {
+                        id: c.id,
+                        code: c.code,
+                        copied_at: c.copied_at || now,
+                        _checked: false,
+                    };
+                });
                 if (detailRow && detailRow.classList.contains("med-detail-row")) {
-                    const now = new Date().toISOString();
-                    const fresh = codes.map(function (c) {
-                        return {
-                            id: c.id,
-                            code: c.code,
-                            copied_at: c.copied_at || now,
-                            _checked: false,
-                        };
-                    });
                     detailRow._codes = fresh;
                     if (!detailRow.hasAttribute("hidden")) {
                         renderCodeList(detailRow, fresh);
                     }
                     refreshNeuBadge(summaryRow, fresh);
                 }
+                if (summaryRow) updateAllCopiedTick(summaryRow, fresh);
 
                 btn.textContent = "Kopiert!";
                 btn.classList.add("copied");
@@ -320,6 +321,26 @@
         }
 
         renderCodeList(detailRow, detailRow._codes);
+        updateAllCopiedTick(summaryRow, detailRow._codes);
+    }
+
+    function updateAllCopiedTick(summaryRow, codes) {
+        if (!summaryRow) return;
+        const tick = summaryRow.querySelector(".all-copied-tick");
+        if (!tick) return;
+        const total = codes.length;
+        if (total === 0) { tick.hidden = true; return; }
+        tick.hidden = !codes.every(function (c) { return !!c.copied_at; });
+    }
+
+    async function copyPznText(btn) {
+        const pzn = btn.dataset.pzn || "";
+        if (!pzn) return;
+        try {
+            await navigator.clipboard.writeText(pzn);
+            btn.classList.add("copied");
+            setTimeout(function () { btn.classList.remove("copied"); }, 1500);
+        } catch (_e) { /* silent */ }
     }
 
     function refreshNeuBadge(summaryRow, codes) {
@@ -340,7 +361,7 @@
             if (!detailRow || !detailRow.classList.contains("med-detail-row")) return;
 
             summaryRow.addEventListener("click", function (e) {
-                if (e.target.closest(".btn-copy")) return;
+                if (e.target.closest(".btn-copy") || e.target.closest(".btn-copy-pzn")) return;
                 const isOpen = !detailRow.hasAttribute("hidden");
                 if (isOpen) {
                     detailRow.setAttribute("hidden", "");
@@ -409,6 +430,7 @@
                 btn.classList.add("copied");
                 renderCodeList(detailRow, codes);
                 refreshNeuBadge(summaryRow, codes);
+                updateAllCopiedTick(summaryRow, codes);
                 setTimeout(function () { btn.classList.remove("copied"); }, 2000);
             });
 
@@ -436,6 +458,7 @@
                         codes.forEach(function (c) { c.copied_at = null; c._checked = false; });
                         renderCodeList(detailRow, codes);
                         refreshNeuBadge(summaryRow, codes);
+                        updateAllCopiedTick(summaryRow, codes);
 
                         openModal({
                             title: "Zurückgesetzt",
@@ -461,6 +484,13 @@
                 if (btn.dataset.from && btn.dataset.to) {
                     copyCodesForMedication(pzn, btn.dataset.from, btn.dataset.to, btn);
                 }
+            });
+        });
+
+        document.querySelectorAll(".btn-copy-pzn").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                copyPznText(btn);
             });
         });
 
