@@ -2,9 +2,12 @@ import base64
 import json
 import logging
 import os
+import re
 import sys
+import xml.etree.ElementTree as ET
 from datetime import datetime, time, timedelta
 from functools import wraps
+from urllib.parse import quote
 
 import pytz
 from dotenv import load_dotenv
@@ -17,6 +20,7 @@ from flask import (
     session,
     jsonify,
     flash,
+    Response,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -455,6 +459,67 @@ def api_codes_reset():
     except Exception:
         app.logger.exception("api_codes_reset: rpc dashboard_reset_copied failed")
         return jsonify({"error": "Server error"}), 500
+
+
+def _safe_filename(name: str) -> str:
+    s = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "_", name or "")
+    s = re.sub(r"\s+", "_", s).strip("._ ")
+    return s[:80] or "Codes"
+
+
+@app.route("/export/codes.xml")
+@login_required
+@limiter.limit("30 per minute")
+def export_codes_xml():
+    token = session["access_token"]
+    pzn = request.args.get("pzn", "")
+    name = request.args.get("name", "")
+    p_from = request.args.get("from", "")
+    p_to = request.args.get("to", "")
+    session_at = request.args.get("session_at", "")
+
+    if not p_from or not p_to:
+        return jsonify({"error": "Missing time range"}), 400
+
+    try:
+        client = get_supabase_client(token)
+        params = {"p_from": p_from, "p_to": p_to, "p_pzn": pzn}
+        if session_at:
+            params["p_session_at"] = session_at
+        result = client.rpc("dashboard_get_codes", params).execute()
+        rows = result.data or []
+    except Exception:
+        app.logger.exception("export_codes_xml: rpc dashboard_get_codes failed")
+        return jsonify({"error": "Server error"}), 500
+
+    root = ET.Element("Codes")
+    for row in rows:
+        ET.SubElement(root, "Code").text = row.get("formatted_code") or ""
+    xml_bytes = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    base = _safe_filename(name)
+    date_part = (p_from or "")[:10]
+    filename_utf8 = f"{base}_{date_part}.xml"
+    filename_ascii = (
+        filename_utf8.encode("ascii", "replace").decode("ascii").replace("?", "_")
+    )
+    disposition = (
+        f'attachment; filename="{filename_ascii}"; '
+        f"filename*=UTF-8''{quote(filename_utf8)}"
+    )
+
+    app.logger.info(
+        "xml_export user_id=%s pzn=%s rows=%d",
+        session.get("user_id"),
+        pzn,
+        len(rows),
+    )
+
+    return Response(
+        xml_bytes,
+        mimetype="application/xml",
+        headers={"Content-Disposition": disposition, "Cache-Control": "no-store"},
+    )
 
 
 @app.route("/api/session")

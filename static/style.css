@@ -1441,3 +1441,69 @@ main.container>*:nth-child(5) {
         font-size: 0.8rem;
     }
 }
+
+/* ---------- Action cell (Alle kopieren + ⋮ menu) ---------- */
+
+.action-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.action-menu {
+    position: relative;
+}
+
+.btn-actions {
+    background: var(--bottle-tint);
+    color: var(--bottle);
+    border: 1px solid var(--bottle-soft);
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-actions:hover {
+    background: var(--bottle-soft);
+    color: var(--bottle-deep);
+}
+
+.btn-actions[aria-expanded="true"] {
+    background: var(--bottle-soft);
+    color: var(--bottle-deep);
+}
+
+.action-menu-popover {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background: var(--card-raised);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--lift-2);
+    min-width: 12rem;
+    z-index: 50;
+}
+
+.action-menu-item {
+    display: block;
+    padding: 0.5rem 0.85rem;
+    color: var(--bottle-deep);
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.action-menu-item:hover {
+    background: var(--bottle-tint);
+}

@@ -80,13 +80,31 @@
                 </span>
             </td>
             <td>
-                <button class="btn-copy"
-                    data-pzn="{{ med.pzn|default('', true) }}"
-                    data-from="{{ p_from }}"
-                    data-to="{{ p_to }}"
-                    {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
-                    Alle kopieren
-                </button>
+                <div class="action-cell">
+                    <button class="btn-copy"
+                        data-pzn="{{ med.pzn|default('', true) }}"
+                        data-from="{{ p_from }}"
+                        data-to="{{ p_to }}"
+                        {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
+                        Alle kopieren
+                    </button>
+                    <div class="action-menu">
+                        <button type="button" class="btn-actions"
+                            aria-haspopup="true" aria-expanded="false"
+                            aria-label="Weitere Aktionen">&#x22EE;</button>
+                        <ul class="action-menu-popover" hidden>
+                            <li>
+                                <a class="action-menu-item"
+                                   href="{{ url_for('export_codes_xml',
+                                        pzn=med.pzn|default('', true),
+                                        name=med.product_name,
+                                        **{'from': p_from, 'to': p_to, 'session_at': session_at|default('')}) }}">
+                                    Als XML herunterladen
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </td>
         </tr>
         {% if show_copy_modal %}

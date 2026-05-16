@@ -377,7 +377,9 @@
             if (!detailRow || !detailRow.classList.contains("med-detail-row")) return;
 
             summaryRow.addEventListener("click", function (e) {
-                if (e.target.closest(".btn-copy") || e.target.closest(".btn-copy-pzn")) return;
+                if (e.target.closest(".btn-copy")
+                    || e.target.closest(".btn-copy-pzn")
+                    || e.target.closest(".action-menu")) return;
                 const isOpen = !detailRow.hasAttribute("hidden");
                 if (isOpen) {
                     detailRow.setAttribute("hidden", "");
@@ -510,6 +512,32 @@
             btn.addEventListener("click", function (e) {
                 e.stopPropagation();
                 copyPznText(btn);
+            });
+        });
+
+        document.querySelectorAll(".btn-actions").forEach(function (btn) {
+            const popover = btn.nextElementSibling;
+            if (!popover || !popover.classList.contains("action-menu-popover")) return;
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                document.querySelectorAll(".action-menu-popover").forEach(function (p) {
+                    if (p !== popover) p.hidden = true;
+                });
+                document.querySelectorAll(".btn-actions").forEach(function (b) {
+                    if (b !== btn) b.setAttribute("aria-expanded", "false");
+                });
+                const isOpen = !popover.hidden;
+                popover.hidden = isOpen;
+                btn.setAttribute("aria-expanded", String(!isOpen));
+            });
+        });
+
+        document.addEventListener("click", function () {
+            document.querySelectorAll(".action-menu-popover").forEach(function (p) {
+                p.hidden = true;
+            });
+            document.querySelectorAll(".btn-actions").forEach(function (b) {
+                b.setAttribute("aria-expanded", "false");
             });
         });
 
