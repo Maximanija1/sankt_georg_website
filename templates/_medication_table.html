@@ -99,6 +99,7 @@
                     <ul class="action-menu-popover" hidden>
                         <li>
                             <a class="action-menu-item"
+                               data-action="download-xml"
                                href="{{ url_for('export_codes_xml',
                                     pzn=med.pzn|default('', true),
                                     name=med.product_name,

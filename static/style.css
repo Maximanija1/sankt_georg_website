@@ -1479,6 +1479,7 @@ main.container>*:nth-child(5) {
     width: 1.65rem;
     height: 1.65rem;
     padding: 0;
+    margin: 0;
     font-size: 1.05rem;
     line-height: 1;
     letter-spacing: 0.05em;
@@ -1488,6 +1489,7 @@ main.container>*:nth-child(5) {
     align-items: center;
     justify-content: center;
     vertical-align: middle;
+    box-shadow: none;
     transition: background 0.12s ease, color 0.12s ease;
 }
 

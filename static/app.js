@@ -562,7 +562,70 @@
             });
         });
 
-        document.addEventListener("click", function () { hideMenu(); });
+        async function markCodesForXmlDownload(params, summaryRow) {
+            if (!params.from || !params.to) return;
+            try {
+                const qs = new URLSearchParams();
+                qs.set("pzn", params.pzn || "");
+                qs.set("from", params.from);
+                qs.set("to", params.to);
+                if (params.session_at) qs.set("session_at", params.session_at);
+                const response = await fetch("/api/codes/detail?" + qs.toString(), {
+                    credentials: "same-origin",
+                    headers: { Accept: "application/json" },
+                });
+                if (response.status === 401) { redirectToLogin(); return; }
+                const data = await response.json();
+                const codes = data.codes || [];
+                if (codes.length === 0) return;
+
+                const unmarkedIds = codes
+                    .filter(function (c) { return !c.copied_at; })
+                    .map(function (c) { return c.id; });
+                if (unmarkedIds.length > 0) {
+                    try {
+                        await fetch("/api/codes/mark", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                            body: JSON.stringify({ ids: unmarkedIds }),
+                        });
+                    } catch (_e) { /* silent */ }
+                }
+
+                if (!summaryRow) return;
+                const now = new Date().toISOString();
+                const fresh = codes.map(function (c) {
+                    return { id: c.id, code: c.code, copied_at: c.copied_at || now, _checked: false };
+                });
+                const detailRow = summaryRow.nextElementSibling;
+                if (detailRow && detailRow.classList.contains("med-detail-row")) {
+                    detailRow._codes = fresh;
+                    if (!detailRow.hasAttribute("hidden")) {
+                        renderCodeList(detailRow, fresh);
+                    }
+                    refreshNeuBadge(summaryRow, fresh);
+                }
+                updateAllCopiedTick(summaryRow, fresh);
+            } catch (_e) { /* silent */ }
+        }
+
+        document.addEventListener("click", function (e) {
+            const dlItem = e.target.closest(".action-menu-item[data-action='download-xml']");
+            if (dlItem) {
+                const summaryRow = currentBtn ? currentBtn.closest("tr") : null;
+                try {
+                    const url = new URL(dlItem.href, window.location.origin);
+                    markCodesForXmlDownload({
+                        pzn: url.searchParams.get("pzn") || "",
+                        from: url.searchParams.get("from") || "",
+                        to: url.searchParams.get("to") || "",
+                        session_at: url.searchParams.get("session_at") || "",
+                    }, summaryRow);
+                } catch (_e) { /* silent */ }
+            }
+            hideMenu();
+        });
         window.addEventListener("scroll", positionMenu, { passive: true });
         window.addEventListener("resize", function () { hideMenu(); });
         document.addEventListener("keydown", function (e) {
