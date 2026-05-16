@@ -515,42 +515,59 @@
             });
         });
 
-        function closeAllActionMenus() {
-            document.querySelectorAll(".action-menu-popover").forEach(function (p) {
-                p.hidden = true;
-            });
-            document.querySelectorAll(".btn-actions").forEach(function (b) {
-                b.setAttribute("aria-expanded", "false");
-            });
+        let currentBtn = null;
+        let currentPopover = null;
+
+        function positionMenu() {
+            if (!currentBtn || !currentPopover) return;
+            const rect = currentBtn.getBoundingClientRect();
+            if (rect.bottom < 0 || rect.top > window.innerHeight) {
+                hideMenu();
+                return;
+            }
+            const w = currentPopover.offsetWidth;
+            currentPopover.style.top = (rect.bottom + 6) + "px";
+            currentPopover.style.left = (rect.right - w) + "px";
+        }
+
+        function showMenu(btn, popover) {
+            currentBtn = btn;
+            currentPopover = popover;
+            popover.hidden = false;
+            positionMenu();
+            btn.setAttribute("aria-expanded", "true");
+        }
+
+        function hideMenu() {
+            if (currentPopover) currentPopover.hidden = true;
+            if (currentBtn) currentBtn.setAttribute("aria-expanded", "false");
+            currentBtn = null;
+            currentPopover = null;
         }
 
         document.querySelectorAll(".btn-actions").forEach(function (btn) {
             const popover = btn.nextElementSibling;
             if (!popover || !popover.classList.contains("action-menu-popover")) return;
+            // Move popover to body so it escapes the table's overflow:hidden clip
+            document.body.appendChild(popover);
+
             btn.addEventListener("click", function (e) {
                 e.stopPropagation();
-                const wasOpen = !popover.hidden;
-                closeAllActionMenus();
-                if (wasOpen) return;
-
-                const rect = btn.getBoundingClientRect();
-                popover.hidden = false;
-                const popWidth = popover.offsetWidth;
-                const margin = 8;
-                let left = rect.right - popWidth;
-                if (left < margin) left = margin;
-                if (left + popWidth > window.innerWidth - margin) {
-                    left = window.innerWidth - margin - popWidth;
+                if (currentBtn === btn) {
+                    hideMenu();
+                } else {
+                    hideMenu();
+                    showMenu(btn, popover);
                 }
-                popover.style.top = (rect.bottom + 6) + "px";
-                popover.style.left = left + "px";
-                btn.setAttribute("aria-expanded", "true");
             });
         });
 
-        document.addEventListener("click", closeAllActionMenus);
-        window.addEventListener("scroll", closeAllActionMenus, { passive: true });
-        window.addEventListener("resize", closeAllActionMenus);
+        document.addEventListener("click", function () { hideMenu(); });
+        window.addEventListener("scroll", positionMenu, { passive: true });
+        window.addEventListener("resize", function () { hideMenu(); });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") hideMenu();
+        });
 
         initExpandRows();
 

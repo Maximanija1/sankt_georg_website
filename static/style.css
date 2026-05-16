@@ -1467,8 +1467,10 @@ main.container>*:nth-child(5) {
 
 .action-menu {
     position: relative;
-    display: inline-block;
-    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
 }
 
 .btn-actions {
@@ -1486,6 +1488,7 @@ main.container>*:nth-child(5) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    vertical-align: middle;
     transition: background 0.12s ease, color 0.12s ease;
 }
 
@@ -1532,13 +1535,22 @@ main.container>*:nth-child(5) {
     padding: 0;
 }
 
+.action-menu-item,
+.action-menu-item:link,
+.action-menu-item:visited,
+.action-menu-item:hover,
+.action-menu-item:focus,
+.action-menu-item:focus-visible,
+.action-menu-item:active {
+    text-decoration: none;
+}
+
 .action-menu-item {
     display: flex;
     align-items: center;
     gap: 0.55rem;
     padding: 0.55rem 0.9rem;
     color: var(--ink);
-    text-decoration: none;
     font-size: 0.86rem;
     white-space: nowrap;
     cursor: pointer;
