@@ -515,31 +515,42 @@
             });
         });
 
-        document.querySelectorAll(".btn-actions").forEach(function (btn) {
-            const popover = btn.nextElementSibling;
-            if (!popover || !popover.classList.contains("action-menu-popover")) return;
-            btn.addEventListener("click", function (e) {
-                e.stopPropagation();
-                document.querySelectorAll(".action-menu-popover").forEach(function (p) {
-                    if (p !== popover) p.hidden = true;
-                });
-                document.querySelectorAll(".btn-actions").forEach(function (b) {
-                    if (b !== btn) b.setAttribute("aria-expanded", "false");
-                });
-                const isOpen = !popover.hidden;
-                popover.hidden = isOpen;
-                btn.setAttribute("aria-expanded", String(!isOpen));
-            });
-        });
-
-        document.addEventListener("click", function () {
+        function closeAllActionMenus() {
             document.querySelectorAll(".action-menu-popover").forEach(function (p) {
                 p.hidden = true;
             });
             document.querySelectorAll(".btn-actions").forEach(function (b) {
                 b.setAttribute("aria-expanded", "false");
             });
+        }
+
+        document.querySelectorAll(".btn-actions").forEach(function (btn) {
+            const popover = btn.nextElementSibling;
+            if (!popover || !popover.classList.contains("action-menu-popover")) return;
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const wasOpen = !popover.hidden;
+                closeAllActionMenus();
+                if (wasOpen) return;
+
+                const rect = btn.getBoundingClientRect();
+                popover.hidden = false;
+                const popWidth = popover.offsetWidth;
+                const margin = 8;
+                let left = rect.right - popWidth;
+                if (left < margin) left = margin;
+                if (left + popWidth > window.innerWidth - margin) {
+                    left = window.innerWidth - margin - popWidth;
+                }
+                popover.style.top = (rect.bottom + 6) + "px";
+                popover.style.left = left + "px";
+                btn.setAttribute("aria-expanded", "true");
+            });
         });
+
+        document.addEventListener("click", closeAllActionMenus);
+        window.addEventListener("scroll", closeAllActionMenus, { passive: true });
+        window.addEventListener("resize", closeAllActionMenus);
 
         initExpandRows();
 

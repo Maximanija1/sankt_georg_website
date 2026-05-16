@@ -8,6 +8,7 @@
         <col class="col-user">
         <col class="col-count">
         <col class="col-action">
+        <col class="col-menu">
     </colgroup>
     {% else %}
     <colgroup>
@@ -17,6 +18,7 @@
         <col class="col-mfr">
         <col class="col-count">
         <col class="col-action">
+        <col class="col-menu">
     </colgroup>
     {% endif %}
     <thead>
@@ -30,6 +32,7 @@
             {% endif %}
             <th>Anzahl</th>
             <th>Aktion</th>
+            <th class="col-menu" aria-label="Mehr"></th>
         </tr>
     </thead>
     <tbody>
@@ -80,30 +83,31 @@
                 </span>
             </td>
             <td>
-                <div class="action-cell">
-                    <button class="btn-copy"
-                        data-pzn="{{ med.pzn|default('', true) }}"
-                        data-from="{{ p_from }}"
-                        data-to="{{ p_to }}"
-                        {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
-                        Alle kopieren
-                    </button>
-                    <div class="action-menu">
-                        <button type="button" class="btn-actions"
-                            aria-haspopup="true" aria-expanded="false"
-                            aria-label="Weitere Aktionen">&#x22EE;</button>
-                        <ul class="action-menu-popover" hidden>
-                            <li>
-                                <a class="action-menu-item"
-                                   href="{{ url_for('export_codes_xml',
-                                        pzn=med.pzn|default('', true),
-                                        name=med.product_name,
-                                        **{'from': p_from, 'to': p_to, 'session_at': session_at|default('')}) }}">
-                                    Als XML herunterladen
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                <button class="btn-copy"
+                    data-pzn="{{ med.pzn|default('', true) }}"
+                    data-from="{{ p_from }}"
+                    data-to="{{ p_to }}"
+                    {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
+                    Alle kopieren
+                </button>
+            </td>
+            <td class="menu-cell">
+                <div class="action-menu">
+                    <button type="button" class="btn-actions"
+                        aria-haspopup="true" aria-expanded="false"
+                        aria-label="Weitere Aktionen" title="Weitere Aktionen">&#x22EE;</button>
+                    <ul class="action-menu-popover" hidden>
+                        <li>
+                            <a class="action-menu-item"
+                               href="{{ url_for('export_codes_xml',
+                                    pzn=med.pzn|default('', true),
+                                    name=med.product_name,
+                                    **{'from': p_from, 'to': p_to, 'session_at': session_at|default('')}) }}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span>Als XML herunterladen</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </td>
         </tr>
@@ -113,7 +117,7 @@
             data-from="{{ p_from }}"
             data-to="{{ p_to }}"
             {% if session_at %}data-session-at="{{ session_at }}"{% endif %}>
-            <td colspan="{% if med.user_email %}7{% else %}6{% endif %}" class="med-detail-cell">
+            <td colspan="{% if med.user_email %}8{% else %}7{% endif %}" class="med-detail-cell">
                 <div class="med-detail-inner">
                     <div class="med-detail-toolbar">
                         <div class="codes-select-row">

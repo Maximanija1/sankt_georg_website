@@ -481,7 +481,17 @@ table.fixed-table {
 }
 
 table.fixed-table .col-idx {
-    width: 4.5rem;
+    width: 3.4rem;
+}
+
+table.fixed-table .col-menu {
+    width: 3rem;
+}
+
+table.fixed-table td.menu-cell,
+table.fixed-table th.col-menu {
+    padding-left: 0.25rem;
+    padding-right: 0.5rem;
 }
 
 table.fixed-table td:nth-child(2),
@@ -509,7 +519,13 @@ table.fixed-table .col-action {
 
 table.fixed-table td:last-child,
 table.fixed-table th:last-child {
-    padding-right: 2rem;
+    padding-right: 0.85rem;
+    padding-left: 0;
+}
+
+table.fixed-table td:nth-last-child(2),
+table.fixed-table th:nth-last-child(2) {
+    padding-right: 0.4rem;
 }
 
 table.fixed-table.with-user .col-user {
@@ -522,22 +538,22 @@ table.fixed-table th {
     word-break: break-word;
 }
 
-/* # (first), Anzahl (2nd-to-last), Aktion (last) must stay on one line */
+/* # (first) and the last three columns (Anzahl, Aktion, Mehr) stay single-line */
 table.fixed-table th:first-child,
 table.fixed-table td:first-child,
-table.fixed-table th:nth-last-child(-n+2),
-table.fixed-table td:nth-last-child(-n+2) {
+table.fixed-table th:nth-last-child(-n+3),
+table.fixed-table td:nth-last-child(-n+3) {
     white-space: nowrap;
     overflow-wrap: normal;
     word-break: normal;
 }
 
-table.fixed-table th:nth-last-child(-n+2),
-table.fixed-table td:nth-last-child(-n+2) {
+table.fixed-table th:nth-last-child(-n+3),
+table.fixed-table td:nth-last-child(-n+3) {
     text-align: center;
 }
 
-table.fixed-table td:nth-last-child(-n+2),
+table.fixed-table td:nth-last-child(-n+3),
 table.fixed-table td:first-child {
     vertical-align: middle;
 }
@@ -1442,37 +1458,42 @@ main.container>*:nth-child(5) {
     }
 }
 
-/* ---------- Action cell (Alle kopieren + ⋮ menu) ---------- */
+/* ---------- ⋮ menu column ---------- */
 
-.action-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+.menu-cell {
+    padding: 0;
+    text-align: center;
 }
 
 .action-menu {
     position: relative;
+    display: inline-block;
+    line-height: 0;
 }
 
 .btn-actions {
-    background: var(--bottle-tint);
-    color: var(--bottle);
-    border: 1px solid var(--bottle-soft);
-    width: 1.9rem;
-    height: 1.9rem;
+    background: transparent;
+    color: var(--bottle-deep);
+    border: 1px solid transparent;
+    width: 1.65rem;
+    height: 1.65rem;
     padding: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
     line-height: 1;
+    letter-spacing: 0.05em;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.12s ease, color 0.12s ease;
 }
 
-.btn-actions:hover {
-    background: var(--bottle-soft);
+.btn-actions:hover,
+.btn-actions:focus-visible {
+    background: var(--bottle-tint);
     color: var(--bottle-deep);
+    outline: none;
 }
 
 .btn-actions[aria-expanded="true"] {
@@ -1481,29 +1502,60 @@ main.container>*:nth-child(5) {
 }
 
 .action-menu-popover {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 4px);
+    position: fixed;
+    top: 0;
+    left: 0;
     margin: 0;
-    padding: 0.25rem 0;
+    padding: 0.35rem 0;
     list-style: none;
     background: var(--card-raised);
     border: 1px solid var(--rule);
-    border-radius: 6px;
-    box-shadow: var(--lift-2);
-    min-width: 12rem;
-    z-index: 50;
+    border-radius: 10px;
+    box-shadow:
+        0 8px 24px rgba(31, 61, 47, 0.16),
+        0 2px 6px rgba(31, 61, 47, 0.08);
+    min-width: 13.5rem;
+    z-index: 1000;
+    text-align: left;
+    line-height: normal;
+    animation: action-menu-in 0.12s ease-out;
+    transform-origin: top right;
+}
+
+@keyframes action-menu-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.action-menu-popover li {
+    margin: 0;
+    padding: 0;
 }
 
 .action-menu-item {
-    display: block;
-    padding: 0.5rem 0.85rem;
-    color: var(--bottle-deep);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.9rem;
+    color: var(--ink);
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.86rem;
     white-space: nowrap;
+    cursor: pointer;
 }
 
-.action-menu-item:hover {
+.action-menu-item svg {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.action-menu-item:hover,
+.action-menu-item:focus-visible {
     background: var(--bottle-tint);
+    color: var(--bottle-deep);
+    outline: none;
+}
+
+.action-menu-item:hover svg {
+    opacity: 1;
 }
