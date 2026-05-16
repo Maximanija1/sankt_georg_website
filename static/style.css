@@ -553,8 +553,7 @@ table.fixed-table td:nth-last-child(-n+3) {
     text-align: center;
 }
 
-table.fixed-table td:nth-last-child(-n+3),
-table.fixed-table td:first-child {
+table.fixed-table td {
     vertical-align: middle;
 }
 
@@ -1543,6 +1542,7 @@ main.container>*:nth-child(5) {
 .action-menu-item:focus-visible,
 .action-menu-item:active {
     text-decoration: none;
+    border-bottom: 0;
 }
 
 .action-menu-item {
