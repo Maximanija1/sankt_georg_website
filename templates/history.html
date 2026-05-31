@@ -38,6 +38,7 @@
             <input type="text" class="search-input" id="searchInput" placeholder="Medikament oder PZN suchen...">
         </div>
 
+        {% set show_copy_modal = true %}
         {% include "_medication_table.html" %}
         {% else %}
         <div class="empty-state">
