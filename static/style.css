@@ -1576,6 +1576,7 @@ main.container>*:nth-child(5) {
 
 .action-menu-item-danger {
     width: 100%;
+    justify-content: flex-start;
     background: none;
     border: none;
     border-radius: 0;
@@ -1585,10 +1586,14 @@ main.container>*:nth-child(5) {
     font-weight: 400;
     color: var(--danger);
     text-align: left;
+    text-decoration: none;
 }
 
 .action-menu-item-danger:hover,
-.action-menu-item-danger:focus-visible {
+.action-menu-item-danger:focus-visible,
+.action-menu-item-danger:active {
     background: var(--danger-soft);
     color: var(--danger);
+    box-shadow: none;
+    transform: none;
 }
