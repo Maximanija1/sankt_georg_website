@@ -814,11 +814,11 @@
             }
         );
         document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState === "visible") {
-                pingSession();
-                resetIdleTimer();
-                tickIdle();
-            }
+            // Returning to the tab is NOT activity, so we don't reset the timer.
+            // Just refresh the display (background timers get throttled); if the
+            // countdown already hit zero while away, tickIdle() verifies with the
+            // server and redirects to login.
+            if (document.visibilityState === "visible") tickIdle();
         });
     });
 })();
