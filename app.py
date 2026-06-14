@@ -461,6 +461,44 @@ def api_codes_reset():
         return jsonify({"error": "Server error"}), 500
 
 
+@app.route("/api/codes/delete", methods=["POST"])
+@login_required
+@limiter.limit("30 per minute")
+def api_codes_delete():
+    token = session["access_token"]
+    data = request.get_json(silent=True) or {}
+    pzn = data.get("pzn", "")
+    p_from = data.get("from", "")
+    p_to = data.get("to", "")
+    session_at = data.get("session_at", "")
+
+    if not p_from or not p_to:
+        return jsonify({"error": "Missing time range"}), 400
+
+    try:
+        client = get_supabase_client(token)
+        params = {"p_pzn": pzn, "p_from": p_from, "p_to": p_to}
+        if session_at:
+            params["p_session_at"] = session_at
+        result = client.rpc("dashboard_delete_medication", params).execute()
+        deleted = (
+            result.data.get("deleted", 0) if isinstance(result.data, dict) else 0
+        )
+        app.logger.info(
+            "medication_delete user_id=%s pzn=%s session_at=%s deleted=%s",
+            session.get("user_id"),
+            pzn,
+            session_at,
+            deleted,
+        )
+        return jsonify({"ok": True, "deleted": deleted})
+    except Exception:
+        app.logger.exception(
+            "api_codes_delete: rpc dashboard_delete_medication failed"
+        )
+        return jsonify({"error": "Server error"}), 500
+
+
 def _safe_filename(name: str) -> str:
     s = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "_", name or "")
     s = re.sub(r"\s+", "_", s).strip("._ ")

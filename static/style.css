@@ -1573,3 +1573,22 @@ main.container>*:nth-child(5) {
 .action-menu-item:hover svg {
     opacity: 1;
 }
+
+.action-menu-item-danger {
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    font-family: inherit;
+    font-weight: 400;
+    color: var(--danger);
+    text-align: left;
+}
+
+.action-menu-item-danger:hover,
+.action-menu-item-danger:focus-visible {
+    background: var(--danger-soft);
+    color: var(--danger);
+}

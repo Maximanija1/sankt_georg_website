@@ -371,6 +371,103 @@
         if (badge) badge.hidden = newCount === 0;
     }
 
+    // ---------- Delete medication (Heute) ----------
+
+    function recountTodayTotals() {
+        const rows = document.querySelectorAll(".medication-row");
+        let totalCodes = 0;
+        rows.forEach(function (r) {
+            const badge = r.querySelector(".count-badge");
+            if (badge) totalCodes += parseInt(badge.textContent, 10) || 0;
+        });
+        const groups = Array.from(document.querySelectorAll(".session-group"))
+            .filter(function (g) { return g.querySelector(".medication-row"); });
+        const summary = document.querySelector(".summary");
+        if (summary) {
+            summary.innerHTML =
+                "Gesamt: <strong>" + totalCodes + "</strong> Codes bei <strong>" +
+                rows.length + "</strong> Medikamenten in <strong>" +
+                groups.length + "</strong> Lieferscheinen";
+        }
+    }
+
+    function renumberRows() {
+        document.querySelectorAll(".fixed-table tbody").forEach(function (tbody) {
+            let i = 0;
+            tbody.querySelectorAll(".medication-row").forEach(function (row) {
+                i += 1;
+                const cell = row.querySelector("td:nth-child(2) strong");
+                if (cell) cell.textContent = i;
+            });
+        });
+        let n = 0;
+        document.querySelectorAll(".session-group").forEach(function (group) {
+            n += 1;
+            const label = group.querySelector(".session-label");
+            if (label) label.textContent = "Lieferschein " + n;
+        });
+    }
+
+    function removeMedicationRow(summaryRow) {
+        if (!summaryRow) { window.location.reload(); return; }
+        const group = summaryRow.closest(".session-group");
+        const detailRow = summaryRow.nextElementSibling;
+        if (detailRow && detailRow.classList.contains("med-detail-row")) {
+            detailRow.remove();
+        }
+        summaryRow.remove();
+        if (group && !group.querySelector(".medication-row")) {
+            group.remove();
+        }
+        // Nothing left at all — reload so the empty-state view renders cleanly.
+        if (!document.querySelector(".medication-row")) {
+            window.location.reload();
+            return;
+        }
+        renumberRows();
+        recountTodayTotals();
+    }
+
+    function deleteMedication(btn, summaryRow) {
+        const pzn = btn.dataset.pzn || "";
+        const from = btn.dataset.from || "";
+        const to = btn.dataset.to || "";
+        const sessionAt = btn.dataset.sessionAt || "";
+        const name = btn.dataset.name || "dieses Medikament";
+        if (!from || !to) return;
+
+        openModal({
+            title: "Medikament löschen",
+            message: "„" + name + "“ und alle zugehörigen Codes endgültig löschen? "
+                + "Die Codes können danach erneut gescannt werden.",
+            okText: "Löschen",
+            cancelText: "Abbrechen",
+            onConfirm: async function () {
+                try {
+                    const body = { pzn: pzn, from: from, to: to };
+                    if (sessionAt) body.session_at = sessionAt;
+                    const res = await fetch("/api/codes/delete", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+                        body: JSON.stringify(body),
+                    });
+                    if (res.status === 401) { redirectToLogin(); return; }
+                    if (!res.ok) throw new Error("delete_failed");
+                } catch (_e) {
+                    openModal({
+                        title: "Fehler",
+                        message: "Löschen fehlgeschlagen. Bitte erneut versuchen.",
+                        okText: "OK",
+                        infoOnly: true,
+                    });
+                    return;
+                }
+                removeMedicationRow(summaryRow);
+            },
+        });
+    }
+
     function initExpandRows() {
         document.querySelectorAll(".med-summary").forEach(function (summaryRow) {
             const detailRow = summaryRow.nextElementSibling;
@@ -623,6 +720,11 @@
                         session_at: url.searchParams.get("session_at") || "",
                     }, summaryRow);
                 } catch (_e) { /* silent */ }
+            }
+            const delItem = e.target.closest(".action-menu-item[data-action='delete-medication']");
+            if (delItem) {
+                const summaryRow = currentBtn ? currentBtn.closest("tr") : null;
+                deleteMedication(delItem, summaryRow);
             }
             hideMenu();
         });
