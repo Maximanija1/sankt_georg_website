@@ -5,10 +5,63 @@
     let lastSessionPing = 0;
     const SESSION_PING_THROTTLE_MS = 2000;
 
+    // ---- Idle session countdown (mirrors server IDLE_LIMIT_SECONDS) ----
+    const IDLE_KEY = "sb_idle_deadline";
+    let idleLimitMs = 30 * 60 * 1000;   // overridden from #sessionTimer data-idle-seconds
+    let idleDeadline = Date.now() + idleLimitMs;
+    let idleWriteAt = 0;
+    let idleVerifying = false;
+
     function redirectToLogin() {
         if (sessionExpired) return;
         sessionExpired = true;
         window.location.href = "/login";
+    }
+
+    function resetIdleTimer() {
+        idleDeadline = Date.now() + idleLimitMs;
+        const now = Date.now();
+        // Share the deadline with other tabs (throttled to avoid spamming writes).
+        if (now - idleWriteAt > 1000) {
+            idleWriteAt = now;
+            try { localStorage.setItem(IDLE_KEY, String(idleDeadline)); } catch (_e) { /* ignore */ }
+        }
+    }
+
+    function formatIdle(ms) {
+        if (ms < 0) ms = 0;
+        const total = Math.ceil(ms / 1000);
+        const m = Math.floor(total / 60);
+        const s = total % 60;
+        return m + ":" + (s < 10 ? "0" + s : s);
+    }
+
+    // Reached zero locally — confirm with the server before logging out, in case
+    // another tab kept the session alive.
+    async function verifyOrExpire() {
+        try {
+            const res = await fetch("/api/session", {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+                cache: "no-store",
+            });
+            if (res.status === 401) { redirectToLogin(); return; }
+            resetIdleTimer();
+        } catch (_e) { /* network error: retry on next tick */ }
+        idleVerifying = false;
+    }
+
+    function tickIdle() {
+        const el = document.getElementById("sessionTimer");
+        if (!el) return;
+        const remaining = idleDeadline - Date.now();
+        if (remaining <= 0) {
+            if (!idleVerifying) { idleVerifying = true; verifyOrExpire(); }
+            return;
+        }
+        const timeEl = el.querySelector(".session-timer-time") || el;
+        timeEl.textContent = formatIdle(remaining);
+        el.classList.toggle("warning", remaining <= 2 * 60 * 1000);
     }
 
     async function pingSession() {
@@ -736,13 +789,36 @@
 
         initExpandRows();
 
+        const timerEl = document.getElementById("sessionTimer");
+        if (timerEl) {
+            const secs = parseInt(timerEl.dataset.idleSeconds, 10);
+            if (!isNaN(secs) && secs > 0) idleLimitMs = secs * 1000;
+            resetIdleTimer();
+            tickIdle();
+            setInterval(tickIdle, 1000);
+            window.addEventListener("storage", function (e) {
+                if (e.key === IDLE_KEY && e.newValue) {
+                    const v = parseInt(e.newValue, 10);
+                    if (!isNaN(v) && v > idleDeadline) idleDeadline = v;
+                }
+            });
+        }
+
+        function onActivity() {
+            pingSession();
+            resetIdleTimer();
+        }
         ["pointerdown", "keydown", "input", "change", "copy", "paste", "cut"].forEach(
             function (evt) {
-                document.addEventListener(evt, pingSession, { capture: true, passive: true });
+                document.addEventListener(evt, onActivity, { capture: true, passive: true });
             }
         );
         document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState === "visible") pingSession();
+            if (document.visibilityState === "visible") {
+                pingSession();
+                resetIdleTimer();
+                tickIdle();
+            }
         });
     });
 })();

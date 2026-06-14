@@ -168,6 +168,49 @@ body {
     font-weight: 600;
 }
 
+.session-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-right: 1rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--ink-mute);
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.session-timer svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.session-timer-time {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    min-width: 2.9em;
+    text-align: right;
+}
+
+.session-timer.warning {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.session-timer.warning svg {
+    opacity: 1;
+}
+
+.session-timer.warning .session-timer-time {
+    color: var(--danger);
+}
+
 .nav-links a {
     color: var(--ink-soft);
     text-decoration: none;

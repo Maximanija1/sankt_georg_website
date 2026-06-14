@@ -16,6 +16,12 @@
             </a>
             <div class="nav-links">
                 <span class="nav-user">Angemeldet als <strong><!--email_off-->{{ session.get('user_email', '') }}<!--/email_off--></strong></span>
+                <span class="session-timer" id="sessionTimer" data-idle-seconds="{{ idle_limit_seconds }}"
+                      title="Automatische Abmeldung nach {{ idle_limit_seconds // 60 }} Minuten ohne Aktivit&auml;t.">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                    <span class="session-timer-label">Abmeldung in</span>
+                    <span class="session-timer-time">{{ '%d:00'|format(idle_limit_seconds // 60) }}</span>
+                </span>
                 <a href="{{ url_for('today') }}" class="{% if request.endpoint == 'today' %}active{% endif %}">Heute</a>
                 <a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}">Verlauf</a>
                 <form method="POST" action="{{ url_for('logout') }}" class="logout-form">

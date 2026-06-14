@@ -115,6 +115,13 @@ REFRESH_THRESHOLD_SECONDS = 5 * 60
 IDLE_LIMIT_SECONDS = 30 * 60
 
 
+@app.context_processor
+def inject_idle_limit():
+    # Exposes the server-side idle timeout to all templates so the UI countdown
+    # can't drift from the real session limit.
+    return {"idle_limit_seconds": IDLE_LIMIT_SECONDS}
+
+
 def _jwt_exp(token):
     try:
         payload_b64 = token.split(".")[1]
