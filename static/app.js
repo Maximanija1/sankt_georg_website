@@ -808,7 +808,15 @@
             pingSession();
             resetIdleTimer();
         }
-        ["pointerdown", "keydown", "input", "change", "copy", "paste", "cut"].forEach(
+        function onKeyActivity(e) {
+            // Ignore browser/OS shortcuts (Cmd/Ctrl held), e.g. Cmd+number tab
+            // switching — that's not interaction with the page. Real typing still
+            // fires `input`, and copy/paste still fire `copy`/`paste`.
+            if (e.metaKey || e.ctrlKey) return;
+            onActivity();
+        }
+        document.addEventListener("keydown", onKeyActivity, { capture: true, passive: true });
+        ["pointerdown", "input", "change", "copy", "paste", "cut"].forEach(
             function (evt) {
                 document.addEventListener(evt, onActivity, { capture: true, passive: true });
             }
